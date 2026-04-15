@@ -1,26 +1,117 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-background: #f7f0e6;
+  --color-surface: #fffbf5;
+  --color-surface-strong: #efe4d4;
+  --color-ink: #1f2430;
+  --color-muted: #65626a;
+  --color-border: rgba(44, 52, 65, 0.12);
+  --color-coral: #e86f5b;
+  --color-cobalt: #4c68c8;
+  --color-sage: #7ca18f;
+  --color-gold: #cfa45a;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-ink);
+  --font-sans: var(--font-interface);
+  --font-mono: var(--font-code);
+  --font-display: var(--font-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-background);
+  color: var(--color-ink);
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.95), transparent 30%),
+    linear-gradient(180deg, #f9f4ec 0%, #f3eadc 100%);
+  color: var(--color-ink);
+  font-family: var(--font-interface), sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+body::before {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.18;
+  content: "";
+  background-image:
+    linear-gradient(
+      120deg,
+      rgba(0, 0, 0, 0.04) 0,
+      rgba(0, 0, 0, 0.04) 1px,
+      transparent 1px,
+      transparent 16px
+    ),
+    linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.45) 0,
+      rgba(255, 255, 255, 0.45) 1px,
+      transparent 1px,
+      transparent 18px
+    );
+  mask-image: radial-gradient(circle at center, black, transparent 85%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(76, 104, 200, 0.18);
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .paper-panel {
+    border: 1px solid var(--color-border);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(255, 250, 244, 0.94)
+    );
+    box-shadow:
+      0 18px 42px rgba(37, 42, 49, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .section-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
 }
