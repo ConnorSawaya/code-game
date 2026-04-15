@@ -1,16 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/stale-rooms",
-      "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/cron/expired-replays",
-      "schedule": "15 2 * * *"
-    },
-    {
-      "path": "/api/cron/prune-replay-bucket",
-      "schedule": "45 2 * * *"
+      "path": "/api/cron/daily-maintenance",
+      "schedule": "0 6 * * *"
     }
   ]
 }
