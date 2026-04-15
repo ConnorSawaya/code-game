@@ -66,83 +66,113 @@ export function ReplayViewer({
 
   return (
     <div className="section-grid">
-      <Card className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <Badge>Replay</Badge>
-            <CardTitle className="mt-3">Room {replay.roomCode}</CardTitle>
-            <CardDescription>
-              Unlisted replay for a completed Relay match. Share the link directly with the people who should see it.
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
+      <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+        <Card className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <Badge>Replay</Badge>
+              <CardTitle className="mt-3">Room {replay.roomCode}</CardTitle>
+              <CardDescription className="mt-2">
+                Unlisted replay for a completed Relay match. Share the link with the people who were there for the chain drift.
+              </CardDescription>
+            </div>
             <Button variant="secondary" onClick={handlePin} disabled={loading === "pin"}>
               <Pin className="h-4 w-4" />
               {loading === "pin" ? "Saving..." : pinned ? "Unpin replay" : "Pin replay"}
             </Button>
           </div>
-        </div>
-        <div className="space-y-5">
-          {replay.chains.map((chain) => (
-            <div
-              key={chain.id}
-              className="rounded-[30px] border border-[color:var(--color-border)] bg-white/85 p-5"
-            >
-              <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="stack-panel px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                Chains
+              </p>
+              <p className="mt-2 font-display text-3xl tracking-[-0.06em]">{replay.chains.length}</p>
+            </div>
+            <div className="stack-panel px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                Skill
+              </p>
+              <p className="mt-2 font-display text-3xl tracking-[-0.06em]">{replay.skillMode}</p>
+            </div>
+            <div className="stack-panel px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                Room
+              </p>
+              <p className="mt-2 font-display text-3xl tracking-[-0.06em]">{replay.roomCode}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Report replay</CardTitle>
+              <CardDescription className="mt-2">
+                Use this if the replay includes public-room abuse, harassment, or inappropriate content.
+              </CardDescription>
+            </div>
+            <Flag className="h-5 w-5 text-[color:var(--color-coral)]" />
+          </div>
+          <Field>
+            <FieldLabel>Reason</FieldLabel>
+            <Input value={reportReason} onChange={(event) => setReportReason(event.target.value)} />
+          </Field>
+          <Field>
+            <FieldLabel>Details</FieldLabel>
+            <Textarea minRows={4} value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} />
+          </Field>
+          <TurnstileWidget onToken={setTurnstileToken} />
+          <Button
+            variant="secondary"
+            onClick={handleReport}
+            disabled={loading === "report" || reportReason.trim().length < 4}
+          >
+            {loading === "report" ? "Sending..." : "Report replay"}
+          </Button>
+        </Card>
+      </section>
+
+      <Card className="space-y-5">
+        {replay.chains.map((chain) => (
+          <div key={chain.id} className="stack-panel overflow-hidden">
+            <div className="border-b border-[color:var(--color-border)] px-5 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.14em] text-[color:var(--color-muted)]">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
                     Chain {chain.originSeatIndex + 1}
                   </p>
-                  <p className="text-base text-[color:var(--color-muted)]">
+                  <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-ink)]">
                     Started by {replay.members[chain.originMemberId]?.nickname ?? "Unknown"}
                   </p>
                 </div>
                 <Badge>{chain.steps.length} steps</Badge>
               </div>
-              <div className="grid gap-4">
-                {chain.steps.map((step) => (
-                  <div key={step.id} className="rounded-[24px] bg-[color:var(--color-surface)] px-4 py-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge>{getRoundLabel(step.roundIndex)}</Badge>
-                      {step.language ? <Badge>{getLanguageLabel(step.language)}</Badge> : null}
-                      {step.fallback ? <Badge>Fallback</Badge> : null}
-                    </div>
-                    <div className="mt-4">
-                      {step.stepType === "code"
-                        ? <ReadonlyCode value={step.text} language={step.language} />
-                        : <p className="text-lg leading-8">{step.text}</p>}
-                    </div>
-                    <div className="mt-4 text-sm text-[color:var(--color-muted)]">
-                      Favorites: {replay.favoritesByStep[step.id] ?? 0}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Report replay</CardTitle>
-            <CardDescription>Use this if the replay contains public-room abuse, harassment, or inappropriate content.</CardDescription>
+            <div className="grid gap-4 px-5 py-5">
+              {chain.steps.map((step) => (
+                <div key={step.id} className="rounded-[24px] border border-[color:var(--color-border)] bg-white/72 px-4 py-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge>{getRoundLabel(step.roundIndex)}</Badge>
+                    {step.language ? <Badge>{getLanguageLabel(step.language)}</Badge> : null}
+                    {step.fallback ? <Badge>Fallback</Badge> : null}
+                  </div>
+                  <div className="mt-4">
+                    {step.stepType === "code" ? (
+                      <ReadonlyCode value={step.text} language={step.language} height={240} />
+                    ) : (
+                      <p className="text-base leading-8 text-[color:var(--color-ink-soft)] sm:text-lg">
+                        {step.text}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4 text-sm font-medium text-[color:var(--color-muted)]">
+                    Favorites: {replay.favoritesByStep[step.id] ?? 0}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <Flag className="h-5 w-5 text-[color:var(--color-coral)]" />
-        </div>
-        <Field>
-          <FieldLabel>Reason</FieldLabel>
-          <Input value={reportReason} onChange={(event) => setReportReason(event.target.value)} />
-        </Field>
-        <Field>
-          <FieldLabel>Details</FieldLabel>
-          <Textarea minRows={4} value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} />
-        </Field>
-        <TurnstileWidget onToken={setTurnstileToken} />
-        <Button variant="secondary" onClick={handleReport} disabled={loading === "report" || reportReason.trim().length < 4}>
-          {loading === "report" ? "Sending..." : "Report replay"}
-        </Button>
+        ))}
       </Card>
     </div>
   );

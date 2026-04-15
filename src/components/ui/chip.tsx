@@ -15,10 +15,10 @@ export function SelectableChip({
     <button
       type="button"
       className={cn(
-        "rounded-full border px-3 py-1.5 text-sm transition",
+        "rounded-full border px-3.5 py-2 text-sm font-medium transition",
         selected
-          ? "border-transparent bg-[color:var(--color-cobalt)] text-white shadow-[0_10px_20px_rgba(76,104,200,0.2)]"
-          : "border-[color:var(--color-border)] bg-white/85 text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]",
+          ? "border-transparent bg-[linear-gradient(180deg,var(--color-cobalt),var(--color-cobalt-strong))] text-white shadow-[0_14px_24px_rgba(53,90,216,0.22)]"
+          : "border-[color:var(--color-border)] bg-white/88 text-[color:var(--color-muted)] shadow-[0_8px_16px_rgba(31,36,48,0.06)] hover:text-[color:var(--color-ink)]",
       )}
       onClick={onClick}
     >

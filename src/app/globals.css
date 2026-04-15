@@ -1,16 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --color-background: #f7f0e6;
-  --color-surface: #fffbf5;
-  --color-surface-strong: #efe4d4;
-  --color-ink: #1f2430;
-  --color-muted: #65626a;
-  --color-border: rgba(44, 52, 65, 0.12);
-  --color-coral: #e86f5b;
-  --color-cobalt: #4c68c8;
-  --color-sage: #7ca18f;
-  --color-gold: #cfa45a;
+  --color-background: #f4efe6;
+  --color-surface: #fff9f0;
+  --color-surface-strong: #ffe0b7;
+  --color-surface-tint: #f7efe1;
+  --color-ink: #172235;
+  --color-ink-soft: #25324a;
+  --color-muted: #586375;
+  --color-border: rgba(23, 34, 53, 0.12);
+  --color-border-strong: rgba(23, 34, 53, 0.2);
+  --color-coral: #ef6d4b;
+  --color-coral-strong: #db5732;
+  --color-cobalt: #355ad8;
+  --color-cobalt-strong: #2848b6;
+  --color-teal: #2e9f97;
+  --color-gold: #edae41;
+  --color-plum: #705ad6;
+  --shadow-panel:
+    0 22px 60px rgba(35, 43, 61, 0.1),
+    0 3px 0 rgba(255, 255, 255, 0.72) inset;
+  --shadow-lift:
+    0 18px 34px rgba(24, 31, 48, 0.14),
+    0 2px 0 rgba(255, 255, 255, 0.28) inset;
+  --shadow-press:
+    0 8px 16px rgba(24, 31, 48, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.22) inset;
 }
 
 @theme inline {
@@ -36,8 +51,11 @@ html {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.95), transparent 30%),
-    linear-gradient(180deg, #f9f4ec 0%, #f3eadc 100%);
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.96), transparent 28%),
+    radial-gradient(circle at 12% 16%, rgba(239, 109, 75, 0.16), transparent 18%),
+    radial-gradient(circle at 84% 18%, rgba(53, 90, 216, 0.16), transparent 22%),
+    radial-gradient(circle at 82% 74%, rgba(46, 159, 151, 0.12), transparent 20%),
+    linear-gradient(180deg, #fbf6ef 0%, #f0e8da 100%);
   color: var(--color-ink);
   font-family: var(--font-interface), sans-serif;
   text-rendering: optimizeLegibility;
@@ -48,24 +66,24 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: 0;
-  opacity: 0.18;
+  opacity: 0.25;
   content: "";
   background-image:
     linear-gradient(
       120deg,
-      rgba(0, 0, 0, 0.04) 0,
-      rgba(0, 0, 0, 0.04) 1px,
+      rgba(255, 255, 255, 0.32) 0,
+      rgba(255, 255, 255, 0.32) 1px,
       transparent 1px,
-      transparent 16px
+      transparent 18px
     ),
     linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.45) 0,
-      rgba(255, 255, 255, 0.45) 1px,
+      rgba(25, 32, 48, 0.025) 0,
+      rgba(25, 32, 48, 0.025) 1px,
       transparent 1px,
       transparent 18px
     );
-  mask-image: radial-gradient(circle at center, black, transparent 85%);
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
 }
 
 a {
@@ -81,7 +99,7 @@ select {
 }
 
 ::selection {
-  background: rgba(76, 104, 200, 0.18);
+  background: rgba(53, 90, 216, 0.2);
 }
 
 @layer base {
@@ -98,20 +116,72 @@ select {
     text-wrap: balance;
   }
 
-  .paper-panel {
-    border: 1px solid var(--color-border);
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.96),
-      rgba(255, 250, 244, 0.94)
-    );
-    box-shadow:
-      0 18px 42px rgba(37, 42, 49, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  }
-
   .section-grid {
     display: grid;
-    gap: 1.5rem;
+    gap: 1.25rem;
+  }
+
+  .panel-game {
+    border: 1px solid var(--color-border);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 249, 240, 0.94)),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 55%);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .panel-bright {
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 245, 231, 0.96)),
+      linear-gradient(135deg, rgba(239, 109, 75, 0.08), transparent 60%);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .panel-ink {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(180deg, rgba(13, 18, 29, 0.98), rgba(17, 22, 35, 0.98)),
+      radial-gradient(circle at top right, rgba(53, 90, 216, 0.18), transparent 30%);
+    box-shadow:
+      0 28px 70px rgba(12, 16, 24, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .surface-pill {
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow:
+      0 10px 24px rgba(26, 33, 47, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+
+  .hero-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(18px);
+    opacity: 0.75;
+  }
+
+  .stack-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid var(--color-border);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(251, 245, 235, 0.96));
+    box-shadow: var(--shadow-panel);
+  }
+
+  .stack-panel::after {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    content: "";
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 50%);
+  }
+
+  .party-grid {
+    background-image:
+      radial-gradient(circle at center, rgba(23, 34, 53, 0.04) 1px, transparent 1px);
+    background-size: 18px 18px;
   }
 }

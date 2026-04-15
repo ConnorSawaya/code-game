@@ -5,23 +5,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-cobalt)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-55",
+  "inline-flex items-center justify-center gap-2 rounded-[18px] border px-4 py-2.5 text-sm font-semibold transition duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-cobalt)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-background)] disabled:pointer-events-none disabled:opacity-55",
   {
     variants: {
       variant: {
         primary:
-          "border-transparent bg-[color:var(--color-ink)] text-white shadow-[0_14px_30px_rgba(20,28,43,0.18)] hover:-translate-y-0.5 hover:bg-[color:var(--color-cobalt)]",
+          "border-[rgba(255,255,255,0.08)] bg-[linear-gradient(180deg,var(--color-cobalt),var(--color-cobalt-strong))] text-white shadow-[var(--shadow-lift)] hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0.5 active:shadow-[var(--shadow-press)]",
         secondary:
-          "border-[color:var(--color-border)] bg-[color:var(--color-surface)] text-[color:var(--color-ink)] hover:-translate-y-0.5 hover:border-[color:var(--color-cobalt)] hover:text-[color:var(--color-cobalt)]",
+          "border-[color:var(--color-border-strong)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,241,228,0.98))] text-[color:var(--color-ink)] shadow-[var(--shadow-press)] hover:-translate-y-0.5 hover:border-[color:var(--color-cobalt)] hover:text-[color:var(--color-cobalt)] active:translate-y-0.5",
         accent:
-          "border-transparent bg-[color:var(--color-coral)] text-white shadow-[0_14px_30px_rgba(232,111,91,0.22)] hover:-translate-y-0.5 hover:brightness-105",
+          "border-[rgba(255,255,255,0.08)] bg-[linear-gradient(180deg,var(--color-coral),var(--color-coral-strong))] text-white shadow-[0_18px_34px_rgba(239,109,75,0.28)] hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0.5",
         ghost:
-          "border-transparent bg-transparent text-[color:var(--color-ink)] hover:bg-white/60",
+          "border-transparent bg-[rgba(255,255,255,0.42)] text-[color:var(--color-ink-soft)] hover:bg-white/72 hover:text-[color:var(--color-ink)]",
       },
       size: {
-        sm: "h-10 px-3.5",
-        md: "h-11 px-4.5",
-        lg: "h-12 px-5 text-base",
+        sm: "h-10 px-3.5 text-sm",
+        md: "h-12 px-5 text-sm",
+        lg: "h-14 px-6 text-base",
       },
       fullWidth: {
         true: "w-full",

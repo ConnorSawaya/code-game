@@ -1,8 +1,9 @@
 import type { Route } from "next";
 import Link from "next/link";
-import { FolderHeart, Play, Radio } from "lucide-react";
+import { FolderHeart, Play, Radio, UsersRound } from "lucide-react";
 import { Wordmark } from "@/components/brand/wordmark";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems: { href: Route; label: string; icon: typeof Play }[] = [
@@ -19,10 +20,10 @@ export function SiteHeader({
   compact?: boolean;
 }) {
   return (
-    <header className={cn("sticky top-0 z-40 px-4 pt-4 sm:px-6", className)}>
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between rounded-[28px] border border-white/70 bg-[color:var(--color-surface)]/82 px-4 py-3 shadow-[0_18px_45px_rgba(30,37,48,0.08)] backdrop-blur-xl">
+    <header className={cn("sticky top-0 z-40 px-4 pt-3 sm:px-6", className)}>
+      <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between gap-4 rounded-[28px] border border-white/65 bg-[rgba(255,249,240,0.88)] px-4 py-3 shadow-[var(--shadow-panel)] backdrop-blur-xl">
         <Wordmark />
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-2 lg:flex">
           {navItems.map((item) => {
             const Icon = item.icon;
 
@@ -30,7 +31,7 @@ export function SiteHeader({
               <Link
                 key={item.href}
                 href={item.href}
-                className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[color:var(--color-muted)] transition hover:bg-white hover:text-[color:var(--color-ink)]"
+                className="surface-pill inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-[color:var(--color-muted)] transition hover:-translate-y-0.5 hover:text-[color:var(--color-ink)]"
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
@@ -41,12 +42,17 @@ export function SiteHeader({
         <div className="flex items-center gap-2">
           {!compact ? (
             <>
-              <Badge className="hidden sm:inline-flex">Guest-friendly</Badge>
-              <Link
-                href="/play"
-                className="inline-flex h-10 items-center rounded-full bg-[color:var(--color-ink)] px-4 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--color-cobalt)]"
-              >
-                Start a room
+              <Badge className="hidden sm:inline-flex">
+                <UsersRound className="h-3.5 w-3.5" />
+                Guest-friendly
+              </Badge>
+              <Link href="/rooms/public" className="hidden md:block">
+                <Button variant="secondary" size="sm">
+                  Browse rooms
+                </Button>
+              </Link>
+              <Link href="/play">
+                <Button size="sm">Create room</Button>
               </Link>
             </>
           ) : null}

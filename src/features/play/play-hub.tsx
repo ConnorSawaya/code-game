@@ -3,14 +3,14 @@
 import { useMemo, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Dice5, DoorOpen, Sparkles, TimerReset } from "lucide-react";
+import { Dice5, DoorOpen, LockKeyhole, Sparkles, TimerReset } from "lucide-react";
 import { usePersistedNickname } from "@/features/auth/use-persisted-nickname";
 import { getSkillModeConfig, LANGUAGE_LABELS } from "@/features/game/logic";
 import { postJson } from "@/lib/client-api";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, FieldHint, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { SelectableChip } from "@/components/ui/chip";
 import { TurnstileWidget } from "@/components/ui/turnstile-widget";
@@ -142,72 +142,112 @@ export function PlayHub() {
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="grid gap-6 lg:grid-cols-[1.3fr_0.9fr]"
+        className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]"
       >
         <Card className="overflow-hidden p-0">
-          <div className="grid gap-6 px-6 py-8 sm:px-8 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="space-y-5">
-              <Badge>Room Setup</Badge>
-              <div className="space-y-3">
-                <h1 className="text-balance text-4xl font-semibold tracking-[-0.05em] text-[color:var(--color-ink)] sm:text-5xl">
-                  Build a room in minutes, then let the chains get gloriously weird.
-                </h1>
-                <p className="max-w-2xl text-lg leading-8 text-[color:var(--color-muted)]">
-                  Relay is tuned for quick party starts: guest-friendly identity,
-                  curated prompt packs, multi-language rounds, and polished reveal links.
-                </p>
+          <div className="relative overflow-hidden px-5 py-6 sm:px-7 sm:py-7">
+            <div className="hero-orb left-[-2rem] top-[-1rem] h-24 w-24 bg-[rgba(239,109,75,0.26)]" />
+            <div className="hero-orb right-[-1rem] top-3 h-28 w-28 bg-[rgba(53,90,216,0.2)]" />
+            <div className="relative grid gap-6 lg:grid-cols-[1fr_0.92fr]">
+              <div className="space-y-5">
+                <Badge>Jump In Fast</Badge>
+                <div className="space-y-3">
+                  <h1 className="text-balance text-4xl font-semibold tracking-[-0.07em] text-[color:var(--color-ink)] sm:text-[4rem] sm:leading-[0.96]">
+                    Start a room, join a code, or get matched into chaos.
+                  </h1>
+                  <p className="max-w-2xl text-base leading-8 text-[color:var(--color-muted)] sm:text-lg">
+                    Relay is built for fast group starts. Pick your nickname once, choose the room vibe, and let the chain mutation do the rest.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="stack-panel px-4 py-4">
+                    <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                      Room Codes
+                    </p>
+                    <p className="mt-2 font-display text-3xl tracking-[-0.06em]">5 chars</p>
+                  </div>
+                  <div className="stack-panel px-4 py-4">
+                    <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                      Prompt Library
+                    </p>
+                    <p className="mt-2 font-display text-3xl tracking-[-0.06em]">600 ideas</p>
+                  </div>
+                  <div className="stack-panel px-4 py-4">
+                    <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                      Modes
+                    </p>
+                    <p className="mt-2 font-display text-3xl tracking-[-0.06em]">4 vibes</p>
+                  </div>
+                </div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="paper-panel rounded-[24px] p-4">
-                  <p className="text-sm font-medium text-[color:var(--color-muted)]">Room Code</p>
-                  <p className="mt-3 font-display text-2xl tracking-[-0.05em]">5 characters</p>
+
+              <div className="grid gap-4">
+                <div className="panel-ink rounded-[30px] p-5 text-[#dfe7f7]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[#8fa1c5]">
+                        Room Preview
+                      </p>
+                      <p className="mt-2 font-display text-3xl tracking-[-0.05em] text-white">
+                        {skillConfig.label}
+                      </p>
+                    </div>
+                    <Badge className="border-white/10 bg-white/6 text-[#dce5f7] shadow-none">
+                      {visibility === "public" ? "Public" : "Private"}
+                    </Badge>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    <div className="rounded-[20px] border border-white/8 bg-white/5 px-3 py-3">
+                      <p className="text-[0.68rem] uppercase tracking-[0.14em] text-[#8fa1c5]">
+                        Timer
+                      </p>
+                      <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-white">
+                        {skillConfig.timerSeconds}s
+                      </p>
+                    </div>
+                    <div className="rounded-[20px] border border-white/8 bg-white/5 px-3 py-3">
+                      <p className="text-[0.68rem] uppercase tracking-[0.14em] text-[#8fa1c5]">
+                        Lines
+                      </p>
+                      <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-white">
+                        {skillConfig.lineLimit}
+                      </p>
+                    </div>
+                    <div className="rounded-[20px] border border-white/8 bg-white/5 px-3 py-3">
+                      <p className="text-[0.68rem] uppercase tracking-[0.14em] text-[#8fa1c5]">
+                        Chars
+                      </p>
+                      <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-white">
+                        {skillConfig.charLimit}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="paper-panel rounded-[24px] p-4">
-                  <p className="text-sm font-medium text-[color:var(--color-muted)]">Modes</p>
-                  <p className="mt-3 font-display text-2xl tracking-[-0.05em]">4 skill presets</p>
-                </div>
-                <div className="paper-panel rounded-[24px] p-4">
-                  <p className="text-sm font-medium text-[color:var(--color-muted)]">Prompts</p>
-                  <p className="mt-3 font-display text-2xl tracking-[-0.05em]">600 starters</p>
+
+                <div className="stack-panel space-y-4 px-5 py-5">
+                  <div>
+                    <FieldLabel>Nickname</FieldLabel>
+                    <CardTitle className="mt-2">Pick your party-game identity.</CardTitle>
+                    <CardDescription className="mt-2">
+                      Guests are first-class players here. Use 2-28 characters and upgrade to email later without losing your history.
+                    </CardDescription>
+                  </div>
+                  <Input
+                    placeholder="Ada, ByteMuse, SnackBug..."
+                    value={nickname}
+                    onChange={(event) => setNickname(event.target.value)}
+                  />
                 </div>
               </div>
             </div>
-            <Card className="border-white/70 bg-white/88">
-              <CardTitle>Identity</CardTitle>
-              <CardDescription>
-                Guests are first-class here. Pick a nickname once, and we’ll carry it through create, join, and quick play.
-              </CardDescription>
-              <Field className="mt-5">
-                <FieldLabel>Nickname</FieldLabel>
-                <Input
-                  placeholder="Ada, ByteMuse, SnackBug..."
-                  value={nickname}
-                  onChange={(event) => setNickname(event.target.value)}
-                />
-                <FieldHint>Use 2-28 characters. You can upgrade to email later without losing your history.</FieldHint>
-              </Field>
-            </Card>
           </div>
         </Card>
+
         <Card className="space-y-5">
-          <Badge>Mode Preview</Badge>
+          <Badge>Pick the Vibe</Badge>
           <div>
             <CardTitle>{skillConfig.label}</CardTitle>
             <CardDescription>{skillConfig.summary}</CardDescription>
-          </div>
-          <div className="grid grid-cols-3 gap-3 text-sm">
-            <div className="rounded-[22px] bg-white/80 p-4">
-              <p className="text-[color:var(--color-muted)]">Timer</p>
-              <p className="mt-2 font-display text-2xl tracking-[-0.04em]">{skillConfig.timerSeconds}s</p>
-            </div>
-            <div className="rounded-[22px] bg-white/80 p-4">
-              <p className="text-[color:var(--color-muted)]">Line Cap</p>
-              <p className="mt-2 font-display text-2xl tracking-[-0.04em]">{skillConfig.lineLimit}</p>
-            </div>
-            <div className="rounded-[22px] bg-white/80 p-4">
-              <p className="text-[color:var(--color-muted)]">Char Cap</p>
-              <p className="mt-2 font-display text-2xl tracking-[-0.04em]">{skillConfig.charLimit}</p>
-            </div>
           </div>
           <Field>
             <FieldLabel>Skill Mode</FieldLabel>
@@ -220,17 +260,40 @@ export function PlayHub() {
               }))}
             />
           </Field>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="stack-panel px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                Timer
+              </p>
+              <p className="mt-2 font-display text-2xl tracking-[-0.05em]">{skillConfig.timerSeconds}s</p>
+            </div>
+            <div className="stack-panel px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                Lines
+              </p>
+              <p className="mt-2 font-display text-2xl tracking-[-0.05em]">{skillConfig.lineLimit}</p>
+            </div>
+            <div className="stack-panel px-4 py-4">
+              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                Chars
+              </p>
+              <p className="mt-2 font-display text-2xl tracking-[-0.05em]">{skillConfig.charLimit}</p>
+            </div>
+          </div>
         </Card>
       </motion.section>
 
-      <section className="grid gap-6 xl:grid-cols-3">
+      <section className="grid gap-5 xl:grid-cols-3">
         <Card className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Create Room</CardTitle>
-              <CardDescription>Private by default, public when you want the room to surface in the browser and quick play.</CardDescription>
+              <Badge>Create</Badge>
+              <CardTitle className="mt-3">Build a room</CardTitle>
+              <CardDescription className="mt-2">
+                Private by default, public when you want the browser and Quick Play to feed it.
+              </CardDescription>
             </div>
-            <Sparkles className="h-5 w-5 text-[color:var(--color-coral)]" />
+            <LockKeyhole className="h-5 w-5 text-[color:var(--color-cobalt)]" />
           </div>
           <Field>
             <FieldLabel>Room Name</FieldLabel>
@@ -320,7 +383,7 @@ export function PlayHub() {
             </Field>
           </div>
           {visibility === "public" ? <TurnstileWidget onToken={setTurnstileToken} /> : null}
-          <Button fullWidth onClick={handleCreateRoom} disabled={loadingAction === "create"}>
+          <Button fullWidth size="lg" onClick={handleCreateRoom} disabled={loadingAction === "create"}>
             {loadingAction === "create" ? "Creating room..." : "Create Relay room"}
           </Button>
         </Card>
@@ -328,10 +391,13 @@ export function PlayHub() {
         <Card className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Join by Code</CardTitle>
-              <CardDescription>Jump straight into a private room, reconnect to an old seat, or spectate a live match.</CardDescription>
+              <Badge>Join</Badge>
+              <CardTitle className="mt-3">Join by code</CardTitle>
+              <CardDescription className="mt-2">
+                Jump into a friend&apos;s lobby, reconnect to a seat, or spectate a game already in progress.
+              </CardDescription>
             </div>
-            <DoorOpen className="h-5 w-5 text-[color:var(--color-cobalt)]" />
+            <DoorOpen className="h-5 w-5 text-[color:var(--color-coral)]" />
           </div>
           <Field>
             <FieldLabel>Room Code</FieldLabel>
@@ -342,6 +408,12 @@ export function PlayHub() {
               onChange={(event) => setRoomCode(event.target.value.toUpperCase())}
             />
           </Field>
+          <div className="stack-panel space-y-3 px-4 py-4">
+            <FieldLabel className="text-[color:var(--color-ink-soft)]">Quick note</FieldLabel>
+            <p className="text-sm leading-7 text-[color:var(--color-muted)]">
+              Private rooms open directly. Public rooms may ask for Turnstile verification before you join.
+            </p>
+          </div>
           <TurnstileWidget onToken={setTurnstileToken} />
           <div className="grid gap-3 sm:grid-cols-2">
             <Button
@@ -358,7 +430,7 @@ export function PlayHub() {
               onClick={() => handleJoinRoom(true)}
               disabled={loadingAction === "spectate"}
             >
-              {loadingAction === "spectate" ? "Opening..." : "Spectate live room"}
+              {loadingAction === "spectate" ? "Opening..." : "Spectate live"}
             </Button>
           </div>
         </Card>
@@ -366,8 +438,11 @@ export function PlayHub() {
         <Card className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Quick Play</CardTitle>
-              <CardDescription>Match into the oldest compatible public room for your selected vibe, or spin up a fresh one automatically.</CardDescription>
+              <Badge>Quick Play</Badge>
+              <CardTitle className="mt-3">Match into a room</CardTitle>
+              <CardDescription className="mt-2">
+                Relay drops you into the oldest compatible public lobby or starts a fresh one automatically.
+              </CardDescription>
             </div>
             <Dice5 className="h-5 w-5 text-[color:var(--color-gold)]" />
           </div>
@@ -382,24 +457,33 @@ export function PlayHub() {
               }))}
             />
           </Field>
-          <div className="rounded-[24px] bg-white/75 p-4">
+          <div className="stack-panel space-y-3 px-4 py-4">
             <div className="flex items-center gap-2 text-[color:var(--color-muted)]">
               <TimerReset className="h-4 w-4" />
-              <span className="text-sm">Current default</span>
+              <span className="text-sm font-medium">Match preview</span>
             </div>
-            <p className="mt-3 font-display text-2xl tracking-[-0.04em]">
+            <p className="font-display text-2xl tracking-[-0.05em]">
               {skillConfig.timerSeconds}s rounds
             </p>
-            <p className="mt-2 text-sm leading-6 text-[color:var(--color-muted)]">
+            <p className="text-sm leading-7 text-[color:var(--color-muted)]">
               {skillMode === "chaos"
-                ? "Chaos uses random-per-code-round language assignment automatically."
-                : "Quick Play keeps the room’s language settings if you join an existing lobby."}
+                ? "Chaos defaults to random language assignment every code round."
+                : "If you join an existing public lobby, Relay keeps that room&apos;s current language settings."}
             </p>
           </div>
           <TurnstileWidget onToken={setTurnstileToken} />
-          <Button variant="accent" fullWidth onClick={handleQuickPlay} disabled={loadingAction === "quick"}>
+          <Button variant="accent" fullWidth size="lg" onClick={handleQuickPlay} disabled={loadingAction === "quick"}>
             {loadingAction === "quick" ? "Matching..." : "Find a room"}
           </Button>
+          <div className="stack-panel space-y-3 px-4 py-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[color:var(--color-cobalt)]" />
+              <FieldLabel className="text-[color:var(--color-ink-soft)]">Why Quick Play works</FieldLabel>
+            </div>
+            <p className="text-sm leading-7 text-[color:var(--color-muted)]">
+              Matchmaking is lightweight on purpose: choose the vibe, keep the friction low, and get into the funny part quickly.
+            </p>
+          </div>
         </Card>
       </section>
     </div>

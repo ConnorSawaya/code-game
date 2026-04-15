@@ -42,9 +42,9 @@ export default function RootLayout({
       <body className="min-h-full">
         <AppProviders />
         <div className="relative min-h-screen overflow-x-hidden">
-          <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(circle_at_top,rgba(255,255,255,0.65),transparent_32%),radial-gradient(circle_at_10%_20%,rgba(232,111,91,0.12),transparent_24%),radial-gradient(circle_at_80%_30%,rgba(70,102,201,0.12),transparent_24%),radial-gradient(circle_at_50%_100%,rgba(122,165,141,0.08),transparent_35%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-90 [background-image:radial-gradient(circle_at_top,rgba(255,255,255,0.64),transparent_32%),radial-gradient(circle_at_8%_20%,rgba(239,109,75,0.14),transparent_22%),radial-gradient(circle_at_82%_24%,rgba(53,90,216,0.16),transparent_24%),radial-gradient(circle_at_76%_76%,rgba(46,159,151,0.1),transparent_24%),linear-gradient(180deg,transparent,rgba(255,255,255,0.16))]" />
           <SiteHeader />
-          <main className="relative z-10 mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-7xl flex-col px-4 pb-16 pt-6 sm:px-6">
+          <main className="relative z-10 mx-auto flex min-h-[calc(100vh-5.5rem)] w-full max-w-[1320px] flex-col px-4 pb-14 pt-5 sm:px-6">
             {children}
           </main>
         </div>
