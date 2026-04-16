@@ -136,6 +136,7 @@ export function getMonacoEditorOptions(readOnly = false): Monaco.editor.IStandal
     smoothScrolling: true,
     overviewRulerBorder: false,
     contextmenu: true,
+    fixedOverflowWidgets: true,
     tabSize: 2,
     insertSpaces: true,
     formatOnPaste: false,

@@ -26,9 +26,11 @@ export function SiteHeader({
 
   return (
     <header className={cn("sticky top-0 z-40 border-b border-[color:var(--color-border)] bg-[rgba(13,17,23,0.78)] backdrop-blur-xl", className)}>
-      <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Wordmark />
-        <nav className="hidden items-center gap-5 lg:flex">
+      <div className="mx-auto flex w-full max-w-[1460px] min-w-0 items-center justify-between gap-4 px-4 py-3 sm:px-6 xl:px-8">
+        <div className="shrink-0">
+          <Wordmark />
+        </div>
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-5 px-4 lg:flex">
           {navItems.map((item) => (
             <a
               key={item.href}
@@ -39,7 +41,7 @@ export function SiteHeader({
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {demoMode ? (
             <Badge className="hidden md:inline-flex">
               <TestTube2 className="h-3.5 w-3.5 text-[color:var(--color-warning)]" />

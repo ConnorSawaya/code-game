@@ -109,8 +109,8 @@ export function RoomActivePhase({
     : "Spectating";
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[minmax(0,1.16fr)_0.84fr]">
-      <Card className="space-y-5 overflow-hidden">
+    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <Card className="min-w-0 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -162,7 +162,7 @@ export function RoomActivePhase({
         {task ? (
           <>
             {task.expectedStepType === "code" ? (
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_300px]">
                 <div className="space-y-4">
                   <MonacoCodeEditor
                     value={draft}
@@ -218,7 +218,7 @@ export function RoomActivePhase({
                         Round limits
                       </FieldLabel>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 2xl:grid-cols-1">
                       <div className="rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-3 py-3">
                         <p className="label-mono text-[color:var(--color-text-muted)]">Time</p>
                         <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
@@ -242,7 +242,7 @@ export function RoomActivePhase({
                 </div>
               </div>
             ) : task.expectedStepType === "description" ? (
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+              <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_300px]">
                 <div className="space-y-4">
                   <Textarea
                     minRows={8}
@@ -293,7 +293,7 @@ export function RoomActivePhase({
                 </div>
               </div>
             ) : (
-              <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+              <div className="grid gap-5 2xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                 <div className="space-y-4">
                   <div className="stack-panel space-y-4 px-5 py-5">
                     <div>
@@ -424,7 +424,7 @@ export function RoomActivePhase({
         <CardDescription>
           Relay only shows the immediately previous step. The rest of the chain stays hidden until reveal.
         </CardDescription>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1">
           <div className="stack-panel px-4 py-4">
             <p className="label-mono text-[color:var(--color-text-muted)]">Timer</p>
             <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">

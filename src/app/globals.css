@@ -125,6 +125,8 @@ select {
   }
 
   .panel-game {
+    position: relative;
+    isolation: isolate;
     border: 1px solid var(--color-border);
     background:
       linear-gradient(180deg, rgba(22, 27, 34, 0.96), rgba(14, 18, 24, 0.98)),
@@ -133,6 +135,8 @@ select {
   }
 
   .panel-ink {
+    position: relative;
+    isolation: isolate;
     border: 1px solid #2d2d30;
     background:
       linear-gradient(180deg, #181818 0%, #1e1e1e 100%);
@@ -143,6 +147,7 @@ select {
 
   .stack-panel {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
     border-radius: 16px;
     border: 1px solid var(--color-border);
@@ -155,8 +160,14 @@ select {
     pointer-events: none;
     position: absolute;
     inset: 0;
+    z-index: 0;
     content: "";
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 28%);
+  }
+
+  .stack-panel > * {
+    position: relative;
+    z-index: 1;
   }
 
   .surface-pill {
@@ -167,6 +178,7 @@ select {
 
   .hero-grid {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
   }
 
@@ -174,12 +186,18 @@ select {
     pointer-events: none;
     position: absolute;
     inset: 0;
+    z-index: 0;
     content: "";
     background:
       linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
     background-size: 32px 32px;
     mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.86), transparent 96%);
+  }
+
+  .hero-grid > * {
+    position: relative;
+    z-index: 1;
   }
 
   .status-dot {
@@ -198,12 +216,14 @@ select {
 
   .noise-panel {
     position: relative;
+    isolation: isolate;
   }
 
   .noise-panel::before {
     pointer-events: none;
     position: absolute;
     inset: 0;
+    z-index: 0;
     opacity: 0.08;
     content: "";
     background-image:
@@ -211,5 +231,10 @@ select {
       radial-gradient(circle at 70% 35%, rgba(255, 255, 255, 0.85) 0, transparent 1px),
       radial-gradient(circle at 35% 80%, rgba(255, 255, 255, 0.75) 0, transparent 1px);
     background-size: 120px 120px;
+  }
+
+  .noise-panel > * {
+    position: relative;
+    z-index: 1;
   }
 }

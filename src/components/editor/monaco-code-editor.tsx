@@ -61,7 +61,7 @@ export function MonacoCodeEditor({
         </>
       }
     >
-      <div className={cn("bg-[#1e1e1e]", className)}>
+      <div className={cn("min-w-0 bg-[#1e1e1e]")}>
         <Editor
           beforeMount={beforeMount}
           height={height}

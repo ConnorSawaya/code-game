@@ -40,20 +40,20 @@ export function EditorShell({
   className?: string;
 }) {
   return (
-    <div className={cn("panel-ink overflow-hidden rounded-[16px]", className)}>
-      <div className="flex h-8 items-center justify-between border-b border-[#2d2d30] bg-[#181818] px-3 text-[0.72rem] text-[#7d8590]">
+    <div className={cn("panel-ink min-w-0 overflow-hidden rounded-[16px]", className)}>
+      <div className="grid h-8 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-[#2d2d30] bg-[#181818] px-3 text-[0.72rem] text-[#7d8590]">
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
         </div>
-        <span className="font-mono text-[0.68rem] uppercase tracking-[0.14em]">
+        <span className="truncate text-center font-mono text-[0.68rem] uppercase tracking-[0.14em]">
           {title}
         </span>
-        <span className="hidden sm:inline text-[0.68rem]">relay-workspace</span>
+        <span className="hidden text-[0.68rem] sm:inline">relay-workspace</span>
       </div>
-      <div className="grid min-h-0 lg:grid-cols-[48px_220px_minmax(0,1fr)]">
-        <div className="hidden border-r border-[#2d2d30] bg-[#181818] lg:flex lg:flex-col lg:items-center lg:py-2">
+      <div className="grid min-h-0 xl:grid-cols-[46px_208px_minmax(0,1fr)]">
+        <div className="hidden border-r border-[#2d2d30] bg-[#181818] xl:flex xl:flex-col xl:items-center xl:py-2">
           {railIcons.map((Icon, index) => (
             <div
               key={index}
@@ -69,7 +69,7 @@ export function EditorShell({
             </div>
           ))}
         </div>
-        <div className="hidden border-r border-[#2d2d30] bg-[#252526] lg:block">
+        <div className="hidden border-r border-[#2d2d30] bg-[#252526] xl:block">
           <div className="border-b border-[#2d2d30] px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
             {treeLabel}
           </div>
@@ -90,24 +90,24 @@ export function EditorShell({
           </div>
         </div>
         <div className="min-w-0 bg-[#1e1e1e]">
-          <div className="flex items-end border-b border-[#2d2d30] bg-[#252526] pl-2">
-            <div className="flex min-w-0 items-center gap-2 rounded-t-[6px] border-x border-t border-[#2d2d30] bg-[#1e1e1e] px-3 py-2 text-[0.78rem] text-[#e6edf3]">
+          <div className="flex items-end gap-1 overflow-x-auto border-b border-[#2d2d30] bg-[#252526] pl-2">
+            <div className="flex min-w-0 shrink-0 items-center gap-2 rounded-t-[6px] border-x border-t border-[#2d2d30] bg-[#1e1e1e] px-3 py-2 text-[0.78rem] text-[#e6edf3]">
               <FileCode2 className="h-3.5 w-3.5 text-[#6cb6ff]" />
               <span className="truncate">{tabLabel}</span>
             </div>
-            <div className="hidden px-3 py-2 text-[0.78rem] text-[#7d8590] md:block">
+            <div className="hidden shrink-0 px-3 py-2 text-[0.78rem] text-[#7d8590] md:block">
               README.md
             </div>
           </div>
-          <div className="min-h-0">{children}</div>
+          <div className="min-h-0 min-w-0">{children}</div>
           {footer ? (
             <div className="border-t border-[#2d2d30] bg-[#181818] px-4 py-2 text-sm text-[#9da7b3]">
               {footer}
             </div>
           ) : null}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#007acc] px-4 py-1.5 font-mono text-[0.68rem] text-white">
-            <div className="flex flex-wrap items-center gap-3">{statusLeft}</div>
-            {statusRight ? <div className="flex items-center gap-3">{statusRight}</div> : null}
+          <div className="flex flex-wrap items-center justify-between gap-3 overflow-x-auto bg-[#007acc] px-4 py-1.5 font-mono text-[0.68rem] text-white">
+            <div className="flex shrink-0 flex-wrap items-center gap-3">{statusLeft}</div>
+            {statusRight ? <div className="flex shrink-0 items-center gap-3">{statusRight}</div> : null}
           </div>
         </div>
       </div>

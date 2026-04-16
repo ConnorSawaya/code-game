@@ -47,9 +47,9 @@ export default async function RootLayout({
     >
       <body className="min-h-full">
         <AppProviders initialDemoMode={initialDemoMode}>
-          <div className="relative min-h-screen overflow-x-hidden">
+          <div className="relative isolate min-h-screen overflow-x-clip">
             <SiteHeader />
-            <main className="relative z-10 mx-auto flex min-h-[calc(100vh-4.75rem)] w-full max-w-[1320px] flex-col px-4 pb-14 pt-6 sm:px-6">
+            <main className="relative z-10 mx-auto flex min-h-[calc(100vh-4.75rem)] w-full max-w-[1460px] min-w-0 flex-col px-4 pb-14 pt-6 sm:px-6 xl:px-8">
               {children}
             </main>
           </div>

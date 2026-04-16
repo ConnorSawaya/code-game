@@ -249,7 +249,7 @@ export function RoomClient({
 
   return (
     <div className="section-grid">
-      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.16fr)_minmax(320px,0.84fr)]">
         <RoomHeader
           snapshot={snapshot}
           timeRemaining={timeRemaining}

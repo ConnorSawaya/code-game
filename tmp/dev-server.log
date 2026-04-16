@@ -1,0 +1,21 @@
+
+> relay@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3001
+
+▲ Next.js 16.2.3 (Turbopack)
+- Local:         http://127.0.0.1:3001
+- Network:       http://127.0.0.1:3001
+✓ Ready in 429ms
+Creating turbopack project { dir: 'C:\\Users\\connors\\Documents\\code game', testMode: true }
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+ GET /play 200 in 631ms (next.js: 109ms, proxy.ts: 10ms, application-code: 512ms)
+ GET /room/BOSS1 200 in 1906ms (next.js: 1518ms, proxy.ts: 236ms, application-code: 152ms)
+ GET /play 200 in 38ms (next.js: 2ms, proxy.ts: 3ms, application-code: 32ms)
+ POST /api/demo/unlock 200 in 78ms (next.js: 60ms, proxy.ts: 5ms, application-code: 13ms)
+ GET /play 200 in 53ms (next.js: 13ms, proxy.ts: 7ms, application-code: 33ms)
+ GET /play 200 in 35ms (next.js: 2ms, proxy.ts: 3ms, application-code: 29ms)
+ POST /api/demo/unlock 200 in 18ms (next.js: 2ms, proxy.ts: 7ms, application-code: 9ms)
+ GET /play 200 in 36ms (next.js: 2ms, proxy.ts: 5ms, application-code: 29ms)
+^C
