@@ -1,0 +1,45 @@
+
+> relay@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3002
+
+▲ Next.js 16.2.3 (Turbopack)
+- Local:         http://127.0.0.1:3002
+- Network:       http://127.0.0.1:3002
+✓ Ready in 354ms
+Creating turbopack project { dir: 'C:\\Users\\connors\\Documents\\code game', testMode: true }
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+ GET /play 200 in 874ms (next.js: 129ms, proxy.ts: 256ms, application-code: 489ms)
+ POST /api/demo/unlock 200 in 149ms (next.js: 111ms, proxy.ts: 12ms, application-code: 26ms)
+ GET /play 200 in 88ms (next.js: 5ms, proxy.ts: 7ms, application-code: 75ms)
+ GET /play 200 in 78ms (next.js: 6ms, proxy.ts: 8ms, application-code: 64ms)
+ POST /api/rooms/create 200 in 440ms (next.js: 423ms, proxy.ts: 8ms, application-code: 9ms)
+ GET /room/LATE2 200 in 595ms (next.js: 525ms, proxy.ts: 7ms, application-code: 63ms)
+ GET /room/LATE2 200 in 105ms (next.js: 60ms, proxy.ts: 8ms, application-code: 37ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (file://C:/Users/connors/Documents/code game/.next/dev/static/chunks/node_modules_next_dist_0nzbwyu._.js:1073:13)
+✓ Compiled in 154ms
+ GET /play 200 in 375ms (next.js: 100ms, proxy.ts: 61ms, application-code: 214ms)
+ POST /api/demo/unlock 200 in 75ms (next.js: 45ms, proxy.ts: 7ms, application-code: 22ms)
+ GET /play 200 in 70ms (next.js: 5ms, proxy.ts: 5ms, application-code: 60ms)
+ GET /play 200 in 66ms (next.js: 5ms, proxy.ts: 6ms, application-code: 56ms)
+ POST /api/rooms/create 200 in 56ms (next.js: 37ms, proxy.ts: 6ms, application-code: 14ms)
+ GET /room/LATE2 200 in 224ms (next.js: 174ms, proxy.ts: 6ms, application-code: 44ms)
+ GET /room/LATE2 200 in 51ms (next.js: 10ms, proxy.ts: 6ms, application-code: 35ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (file://C:/Users/connors/Documents/code game/.next/dev/static/chunks/node_modules_next_dist_0nzbwyu._.js:1073:13)
+ GET /play 200 in 64ms (next.js: 4ms, proxy.ts: 5ms, application-code: 55ms)
+ POST /api/demo/unlock 200 in 22ms (next.js: 4ms, proxy.ts: 6ms, application-code: 11ms)
+ GET /play 200 in 63ms (next.js: 4ms, proxy.ts: 5ms, application-code: 54ms)
+ GET /play 200 in 63ms (next.js: 5ms, proxy.ts: 5ms, application-code: 53ms)
+ POST /api/rooms/create 200 in 23ms (next.js: 4ms, proxy.ts: 5ms, application-code: 14ms)
+ GET /room/LATE2 200 in 86ms (next.js: 50ms, proxy.ts: 9ms, application-code: 27ms)
+ GET /room/LATE2 200 in 49ms (next.js: 9ms, proxy.ts: 7ms, application-code: 33ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (file://C:/Users/connors/Documents/code game/.next/dev/static/chunks/node_modules_next_dist_0nzbwyu._.js:1073:13)
+ GET /play 200 in 78ms (next.js: 5ms, proxy.ts: 6ms, application-code: 67ms)
+ POST /api/demo/unlock 200 in 17ms (next.js: 4ms, proxy.ts: 7ms, application-code: 7ms)
+ GET /play 200 in 82ms (next.js: 5ms, proxy.ts: 6ms, application-code: 72ms)
+ GET /play 200 in 65ms (next.js: 5ms, proxy.ts: 5ms, application-code: 56ms)
+ POST /api/rooms/create 200 in 21ms (next.js: 4ms, proxy.ts: 6ms, application-code: 10ms)
+ GET /room/LATE2 200 in 89ms (next.js: 49ms, proxy.ts: 5ms, application-code: 35ms)
+ GET /room/LATE2 200 in 60ms (next.js: 9ms, proxy.ts: 7ms, application-code: 43ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (file://C:/Users/connors/Documents/code game/.next/dev/static/chunks/node_modules_next_dist_0nzbwyu._.js:1073:13)

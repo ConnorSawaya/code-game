@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Clock3, Copy, Eye, Play, TestTube2, Users } from "lucide-react";
 import type { CodeLanguage, RoomSnapshot } from "@/features/game/types";
-import { getRoundLabel, getSkillModeConfig } from "@/features/game/logic";
+import {
+  canRunPreviewLanguage,
+  getRoundLabel,
+  getSkillModeConfig,
+} from "@/features/game/logic";
 import { HtmlPreviewPanel } from "@/components/editor/html-preview-panel";
 import { MonacoCodeEditor } from "@/components/editor/monaco-code-editor";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +32,7 @@ export function ReadonlyCode({
     return null;
   }
 
-  const canPreview = allowPreview && language === "html_css_js";
+  const canPreview = allowPreview && canRunPreviewLanguage(language);
 
   return (
     <div className="space-y-3">
@@ -55,7 +59,7 @@ export function ReadonlyCode({
           </div>
         }
       />
-      {previewOpen ? <HtmlPreviewPanel snippet={value} height={260} /> : null}
+      {previewOpen ? <HtmlPreviewPanel snippet={value} language={language} height={260} /> : null}
     </div>
   );
 }

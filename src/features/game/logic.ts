@@ -84,6 +84,10 @@ export function getLanguageLabel(language: CodeLanguage | null) {
   return language ? LANGUAGE_LABELS[language] : "Prompt";
 }
 
+export function canRunPreviewLanguage(language: CodeLanguage | null) {
+  return language === "html_css_js" || language === "javascript";
+}
+
 export function getRoundLabel(roundIndex: number) {
   if (roundIndex === 0) {
     return "Starter Prompt";

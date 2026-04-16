@@ -6,6 +6,7 @@ import type { PromptRecord, RoomSnapshot, ViewerTask } from "@/features/game/typ
 import { MonacoCodeEditor } from "@/components/editor/monaco-code-editor";
 import { HtmlPreviewPanel } from "@/components/editor/html-preview-panel";
 import {
+  canRunPreviewLanguage,
   getLanguageLabel,
   getSkillModeConfig,
   validateSnippet,
@@ -195,19 +196,23 @@ export function RoomActivePhase({
                   </Button>
                 </div>
                 <div className="space-y-4">
-                  {task.language === "html_css_js" ? (
-                    <HtmlPreviewPanel snippet={draft} />
+                  {canRunPreviewLanguage(task.language) ? (
+                    <HtmlPreviewPanel
+                      snippet={draft}
+                      language={task.language ?? "html_css_js"}
+                    />
                   ) : (
                     <div className="stack-panel space-y-3 px-5 py-5">
                       <div className="flex items-center gap-2">
                         <Wand2 className="h-4 w-4 text-[color:var(--color-accent-hover)]" />
                         <FieldLabel className="text-[color:var(--color-text-soft)]">
-                          Code round tip
+                          Runtime note
                         </FieldLabel>
                       </div>
                       <p className="text-sm leading-7 text-[color:var(--color-text-muted)]">
-                        Small, believable snippets usually create the funniest misunderstandings.
-                        Favor one strong idea over a full feature.
+                        This build only runs browser-safe HTML/CSS/JS or JavaScript snippets.
+                        TypeScript and Python stay text-only for now, so the panel stays honest instead
+                        of pretending to execute them.
                       </p>
                     </div>
                   )}

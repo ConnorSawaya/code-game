@@ -173,10 +173,87 @@ export function getEditorTreeItems(language: CodeLanguage) {
   ];
 }
 
-export function buildPreviewSrcDoc(snippet: string) {
+function buildRuntimeBridgeScript() {
+  return `
+    <script>
+      const relayPost = (payload) => {
+        try {
+          window.parent.postMessage({ source: "relay-preview", ...payload }, "*");
+        } catch {}
+      };
+      const relayFormat = (value) => {
+        try {
+          return typeof value === "string" ? value : JSON.stringify(value);
+        } catch {
+          return String(value);
+        }
+      };
+
+      ["log", "info", "warn", "error"].forEach((level) => {
+        const original = console[level].bind(console);
+        console[level] = (...args) => {
+          relayPost({
+            type: "console",
+            level,
+            message: args.map(relayFormat).join(" "),
+          });
+          original(...args);
+        };
+      });
+
+      window.addEventListener("error", (event) => {
+        relayPost({
+          type: "error",
+          level: "error",
+          message: event.message || "Runtime error",
+          stack: event.error && event.error.stack ? event.error.stack : "",
+        });
+      });
+
+      window.addEventListener("unhandledrejection", (event) => {
+        const reason = event.reason;
+        relayPost({
+          type: "error",
+          level: "error",
+          message: reason && reason.message ? reason.message : String(reason),
+          stack: reason && reason.stack ? reason.stack : "",
+        });
+      });
+
+      window.addEventListener("DOMContentLoaded", () => {
+        relayPost({
+          type: "ready",
+          message: "Runtime ready.",
+        });
+      });
+    </script>
+  `;
+}
+
+function injectBridgeIntoDocument(
+  documentHtml: string,
+  bridgeScript: string,
+  previewStyles = "",
+) {
+  if (/<\/head>/i.test(documentHtml)) {
+    return documentHtml.replace(/<\/head>/i, `${previewStyles}${bridgeScript}</head>`);
+  }
+
+  if (/<body[\s>]/i.test(documentHtml)) {
+    return documentHtml.replace(/<body([^>]*)>/i, `<body$1>${bridgeScript}`);
+  }
+
+  return `${previewStyles}${bridgeScript}${documentHtml}`;
+}
+
+export function buildPreviewSrcDoc(
+  snippet: string,
+  language: CodeLanguage = "html_css_js",
+) {
   const trimmed = snippet.trim();
   const csp =
     "default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data: https:;";
+  const bridgeScript = buildRuntimeBridgeScript();
   const previewMarkup = `
     <main class="relay-preview">
       <h1>Relay Preview</h1>
@@ -197,15 +274,19 @@ export function buildPreviewSrcDoc(snippet: string) {
     </style>
   `;
 
-  const shellStart = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta http-equiv="Content-Security-Policy" content="${csp}" />${previewStyles}</head><body>`;
+  const shellStart = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta http-equiv="Content-Security-Policy" content="${csp}" />${previewStyles}${bridgeScript}</head><body>`;
   const shellEnd = "</body></html>";
 
   if (!trimmed) {
     return `${shellStart}<div style="display:grid;place-items:center;min-height:220px;color:#6b7280;border:1px dashed #d1d5db;border-radius:14px;">Start typing HTML, CSS, and JS to preview it here.</div>${shellEnd}`;
   }
 
+  if (language === "javascript") {
+    return `${shellStart}${previewMarkup}<script type="module">${trimmed}</script>${shellEnd}`;
+  }
+
   if (/<html[\s>]/i.test(trimmed)) {
-    return trimmed;
+    return injectBridgeIntoDocument(trimmed, bridgeScript, previewStyles);
   }
 
   if (/<body[\s>]/i.test(trimmed) || /<(div|section|main|article|header|footer|nav|button|canvas|svg|form|input|label|ul|ol|li|p|h1|h2|h3|style|script)\b/i.test(trimmed)) {

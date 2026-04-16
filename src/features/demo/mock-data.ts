@@ -420,15 +420,10 @@ export function buildDemoRoomViewData(
     chains: completeChains,
   };
 
-    return {
-      snapshot,
-      reactionsByStep: {
-        [completeChains[0]?.steps[2]?.id ?? ""]: { "🔥": 3, "🤯": 1 },
-      },
-      favoritesByStep: {
-        [completeChains[0]?.steps[3]?.id ?? ""]: 2,
-      [completeChains[1]?.steps[4]?.id ?? ""]: 4,
-    },
+  return {
+    snapshot,
+    reactionsByStep: {},
+    favoritesByStep: {},
   };
 }
 
