@@ -128,7 +128,11 @@ export function getLanguageLabel(language: CodeLanguage | null) {
 }
 
 export function canRunPreviewLanguage(language: CodeLanguage | null) {
-  return language === "html_css_js" || language === "javascript";
+  return (
+    language === "html_css_js" ||
+    language === "javascript" ||
+    language === "typescript"
+  );
 }
 
 export function getRoundLabel(roundIndex: number) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo } from "react";
-import { Search, Sparkles, TestTube2, TimerReset, Wand2 } from "lucide-react";
+import { Search, Sparkles, TestTube2, Wand2 } from "lucide-react";
 import type { PromptRecord, RoomSnapshot, ViewerTask } from "@/features/game/types";
 import { MonacoCodeEditor } from "@/components/editor/monaco-code-editor";
 import { HtmlPreviewPanel } from "@/components/editor/html-preview-panel";
@@ -62,6 +62,7 @@ export function RoomActivePhase({
 }) {
   const deferredSearch = useDeferredValue(promptSearch);
   const skillConfig = getSkillModeConfig(snapshot.settings.skillMode);
+  const canPreviewCurrentLanguage = canRunPreviewLanguage(task?.language ?? null);
 
   const promptPacks = useMemo(() => {
     const packs = new Map<string, string>();
@@ -107,10 +108,40 @@ export function RoomActivePhase({
       : task.expectedStepType === "code"
         ? "Code round"
         : "Description round"
-    : "Spectating";
+      : "Spectating";
+
+  const editorNotes =
+    task?.expectedStepType === "code"
+      ? [
+          "# Relay turn notes",
+          `phase: ${snapshot.game?.phase ?? "code"}`,
+          `language: ${getLanguageLabel(task.language)}`,
+          task.previousStep
+            ? `previous_step: ${task.previousStep.stepType}`
+            : "previous_step: prompt",
+          canPreviewCurrentLanguage
+            ? "// Run the sandbox before you lock the snippet."
+            : "// This language stays text-only for now.",
+        ]
+      : undefined;
+
+  const editorSettings =
+    task?.expectedStepType === "code"
+      ? [
+          "{",
+          `  "roomCode": "${snapshot.code}",`,
+          `  "phase": "${snapshot.game?.phase ?? "code"}",`,
+          `  "roundIndex": ${snapshot.game?.roundIndex ?? 0},`,
+          `  "language": "${task.language ?? "javascript"}",`,
+          `  "lineLimit": ${skillConfig.lineLimit},`,
+          `  "charLimit": ${skillConfig.charLimit},`,
+          `  "timerSeconds": ${skillConfig.timerSeconds}`,
+          "}",
+        ]
+      : undefined;
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <section className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
       <Card className="min-w-0 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-3">
@@ -163,87 +194,99 @@ export function RoomActivePhase({
         {task ? (
           <>
             {task.expectedStepType === "code" ? (
-              <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_300px]">
-                <div className="space-y-4">
-                  <MonacoCodeEditor
-                    value={draft}
-                    language={task.language ?? "javascript"}
-                    onChange={setDraft}
-                    height={430}
-                    footer={
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span
-                          className={cn(
-                            "font-mono text-[0.68rem] uppercase tracking-[0.14em]",
-                            codeMetrics?.isValid ? "text-[#2ea043]" : "text-[#f85149]",
-                          )}
-                        >
-                          {codeMetrics?.lineCount ?? 0}/{skillConfig.lineLimit} lines /{" "}
-                          {codeMetrics?.charCount ?? 0}/{skillConfig.charLimit} chars
-                        </span>
-                        <span className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
-                          tab support / bracket match / dark+
-                        </span>
+              <div className="space-y-4">
+                <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_360px]">
+                  <div className="space-y-4">
+                    <MonacoCodeEditor
+                      value={draft}
+                      language={task.language ?? "javascript"}
+                      onChange={setDraft}
+                      height={460}
+                      notesLines={editorNotes}
+                      settingsLines={editorSettings}
+                      toolsLines={[
+                        "Explorer opens the active file, notes, and room settings.",
+                        canPreviewCurrentLanguage
+                          ? "Run the sandbox before you submit if you want a quick reality check."
+                          : "Python stays text-only for now, so Relay stays honest.",
+                        "Autosave keeps your current draft on this machine.",
+                      ]}
+                      footer={
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <span
+                            className={cn(
+                              "font-mono text-[0.68rem] uppercase tracking-[0.14em]",
+                              codeMetrics?.isValid ? "text-[#2ea043]" : "text-[#f85149]",
+                            )}
+                          >
+                            {codeMetrics?.lineCount ?? 0}/{skillConfig.lineLimit} lines /{" "}
+                            {codeMetrics?.charCount ?? 0}/{skillConfig.charLimit} chars
+                          </span>
+                          <span className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
+                            explore / notes / settings / dark+
+                          </span>
+                        </div>
+                      }
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    {canPreviewCurrentLanguage ? (
+                      <HtmlPreviewPanel
+                        snippet={draft}
+                        language={task.language ?? "html_css_js"}
+                        autoRun={false}
+                        height={460}
+                      />
+                    ) : (
+                      <div className="stack-panel space-y-3 px-5 py-5">
+                        <div className="flex items-center gap-2">
+                          <Wand2 className="h-4 w-4 text-[color:var(--color-accent-hover)]" />
+                          <FieldLabel className="text-[color:var(--color-text-soft)]">
+                            Runtime note
+                          </FieldLabel>
+                        </div>
+                        <p className="text-sm leading-7 text-[color:var(--color-text-muted)]">
+                          Python stays text-only right now. Relay still saves and rotates the snippet correctly,
+                          but the sandbox only runs browser-safe HTML/CSS/JS, JavaScript, and TypeScript.
+                        </p>
                       </div>
-                    }
-                  />
-                  <Button fullWidth size="lg" onClick={onSubmit} disabled={isSubmitDisabled}>
+                    )}
+                    <div className="stack-panel space-y-3 px-5 py-5">
+                      <FieldLabel className="text-[color:var(--color-text-soft)]">
+                        Before you submit
+                      </FieldLabel>
+                      <p className="text-sm leading-7 text-[color:var(--color-text-muted)]">
+                        Make one clean idea, run it once if the sandbox is available, then send it.
+                        The next player only gets one shot at understanding you.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="space-y-2">
+                    <p className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+                      Submission state
+                    </p>
+                    <p className="text-sm leading-7 text-[color:var(--color-text-soft)]">
+                      {codeMetrics?.isValid
+                        ? canPreviewCurrentLanguage
+                          ? "Run the sandbox if you want, then lock the snippet in."
+                          : "The snippet fits the round limits and is ready to send."
+                        : "This draft is too long for the room settings. Trim it before submitting."}
+                    </p>
+                  </div>
+                  <Button
+                    className="lg:min-w-[240px]"
+                    size="lg"
+                    onClick={onSubmit}
+                    disabled={isSubmitDisabled}
+                  >
                     {submitting === "submit"
                       ? "Submitting..."
                       : codeMetrics?.isValid
                         ? "Lock in this snippet"
-                        : "Trim the snippet to fit the round limits"}
+                        : "Trim the snippet to fit"}
                   </Button>
-                </div>
-                <div className="space-y-4">
-                  {canRunPreviewLanguage(task.language) ? (
-                    <HtmlPreviewPanel
-                      snippet={draft}
-                      language={task.language ?? "html_css_js"}
-                    />
-                  ) : (
-                    <div className="stack-panel space-y-3 px-5 py-5">
-                      <div className="flex items-center gap-2">
-                        <Wand2 className="h-4 w-4 text-[color:var(--color-accent-hover)]" />
-                        <FieldLabel className="text-[color:var(--color-text-soft)]">
-                          Runtime note
-                        </FieldLabel>
-                      </div>
-                      <p className="text-sm leading-7 text-[color:var(--color-text-muted)]">
-                        This build only runs browser-safe HTML/CSS/JS or JavaScript snippets.
-                        TypeScript and Python stay text-only for now, so the panel stays honest instead
-                        of pretending to execute them.
-                      </p>
-                    </div>
-                  )}
-                  <div className="stack-panel space-y-3 px-5 py-5">
-                    <div className="flex items-center gap-2">
-                      <TimerReset className="h-4 w-4 text-[color:var(--color-warning)]" />
-                      <FieldLabel className="text-[color:var(--color-text-soft)]">
-                        Round limits
-                      </FieldLabel>
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 2xl:grid-cols-1">
-                      <div className="rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-3 py-3">
-                        <p className="label-mono text-[color:var(--color-text-muted)]">Time</p>
-                        <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-                          {skillConfig.timerSeconds}s
-                        </p>
-                      </div>
-                      <div className="rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-3 py-3">
-                        <p className="label-mono text-[color:var(--color-text-muted)]">Lines</p>
-                        <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-                          {skillConfig.lineLimit}
-                        </p>
-                      </div>
-                      <div className="rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-3 py-3">
-                        <p className="label-mono text-[color:var(--color-text-muted)]">Chars</p>
-                        <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-                          {skillConfig.charLimit}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             ) : task.expectedStepType === "description" ? (
@@ -425,9 +468,9 @@ export function RoomActivePhase({
       </Card>
 
       <Card className="space-y-5">
-        <CardTitle>Round intel</CardTitle>
+        <CardTitle>Round board</CardTitle>
         <CardDescription>
-          Relay only shows the immediately previous step. The rest of the chain stays hidden until reveal.
+          One visible step, one short turn, one chance to be understood.
         </CardDescription>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1">
           <div className="stack-panel px-4 py-4">

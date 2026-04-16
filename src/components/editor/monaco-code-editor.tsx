@@ -28,6 +28,9 @@ export function MonacoCodeEditor({
   className,
   title,
   footer,
+  notesLines,
+  settingsLines,
+  toolsLines,
 }: {
   value: string;
   language: CodeLanguage;
@@ -37,6 +40,9 @@ export function MonacoCodeEditor({
   className?: string;
   title?: string;
   footer?: ReactNode;
+  notesLines?: string[];
+  settingsLines?: string[];
+  toolsLines?: string[];
 }) {
   const fileName = title ?? getEditorFilename(language);
 
@@ -47,6 +53,9 @@ export function MonacoCodeEditor({
       tabLabel={fileName}
       treeItems={getEditorTreeItems(language)}
       footer={footer}
+      notesLines={notesLines}
+      settingsLines={settingsLines}
+      toolsLines={toolsLines}
       statusLeft={
         <>
           <span>{readOnly ? "VIEW" : "EDIT"}</span>

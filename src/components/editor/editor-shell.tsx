@@ -3,8 +3,14 @@
 import { useMemo, useState, type ReactNode } from "react";
 import {
   Blocks,
+  ChevronDown,
+  ChevronRight,
   FileCode2,
+  FileJson2,
+  FileText,
   Files,
+  Folder,
+  FolderOpen,
   Search,
   Settings2,
   Wrench,
@@ -16,9 +22,11 @@ export interface EditorTreeItem {
   active?: boolean;
   depth?: number;
   kind?: "file" | "folder";
+  documentId?: "editor" | "notes" | "settings";
 }
 
 type RailPaneId = "explorer" | "search" | "outline" | "tools" | "settings";
+type EditorDocumentId = "editor" | "notes" | "settings";
 
 const railItems: Array<{
   id: RailPaneId;
@@ -32,6 +40,48 @@ const railItems: Array<{
   { id: "settings", label: "Settings", icon: Settings2 },
 ];
 
+function getDocumentForTreeItem(
+  item: EditorTreeItem,
+  tabLabel: string,
+): EditorDocumentId | null {
+  if (item.documentId) {
+    return item.documentId;
+  }
+
+  if (item.label === tabLabel) {
+    return "editor";
+  }
+
+  if (item.label.toLowerCase().includes("readme")) {
+    return "notes";
+  }
+
+  if (item.label.toLowerCase().includes("settings")) {
+    return "settings";
+  }
+
+  return null;
+}
+
+function isTreeItemVisible(treeItems: EditorTreeItem[], index: number, openFolders: Set<string>) {
+  let currentDepth = treeItems[index]?.depth ?? 0;
+
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    const candidate = treeItems[cursor];
+    const candidateDepth = candidate.depth ?? 0;
+
+    if (candidateDepth < currentDepth && candidate.kind === "folder") {
+      if (!openFolders.has(candidate.label)) {
+        return false;
+      }
+
+      currentDepth = candidateDepth;
+    }
+  }
+
+  return true;
+}
+
 export function EditorShell({
   title,
   tabLabel,
@@ -41,6 +91,12 @@ export function EditorShell({
   treeItems,
   children,
   footer,
+  notesTitle = "README.md",
+  notesLines,
+  settingsTitle = "room.settings.json",
+  settingsLines,
+  toolsLines,
+  searchItems,
   className,
 }: {
   title: string;
@@ -51,10 +107,24 @@ export function EditorShell({
   treeItems: EditorTreeItem[];
   children: ReactNode;
   footer?: ReactNode;
+  notesTitle?: string;
+  notesLines?: string[];
+  settingsTitle?: string;
+  settingsLines?: string[];
+  toolsLines?: string[];
+  searchItems?: string[];
   className?: string;
 }) {
   const [activePane, setActivePane] = useState<RailPaneId>("explorer");
-  const [activeTab, setActiveTab] = useState<"editor" | "notes">("editor");
+  const [activeDocument, setActiveDocument] = useState<EditorDocumentId>("editor");
+  const [openFolders, setOpenFolders] = useState<Set<string>>(
+    () =>
+      new Set(
+        treeItems
+          .filter((item) => item.kind === "folder")
+          .map((item) => item.label),
+      ),
+  );
 
   const sidebarLabel = useMemo(() => {
     if (activePane === "explorer") {
@@ -64,6 +134,40 @@ export function EditorShell({
     return railItems.find((item) => item.id === activePane)?.label ?? treeLabel;
   }, [activePane, treeLabel]);
 
+  const documentTabs = useMemo(
+    () =>
+      [
+        { id: "editor" as const, label: tabLabel, icon: FileCode2 },
+        ...(notesLines?.length
+          ? [{ id: "notes" as const, label: notesTitle, icon: FileText }]
+          : []),
+        ...(settingsLines?.length
+          ? [{ id: "settings" as const, label: settingsTitle, icon: FileJson2 }]
+          : []),
+      ],
+    [notesLines?.length, notesTitle, settingsLines?.length, settingsTitle, tabLabel],
+  );
+
+  const renderedSearchItems = useMemo(
+    () =>
+      searchItems ?? [
+        `file:${tabLabel}`,
+        "filter: active turn",
+        "scope: current room",
+      ],
+    [searchItems, tabLabel],
+  );
+
+  const renderedToolsLines = useMemo(
+    () =>
+      toolsLines ?? [
+        "Run code before you submit it.",
+        "Autosave keeps your draft safe.",
+        "Only the previous step is visible.",
+      ],
+    [toolsLines],
+  );
+
   const sidebarContent = useMemo(() => {
     switch (activePane) {
       case "search":
@@ -72,17 +176,17 @@ export function EditorShell({
             <div className="rounded-[8px] border border-[#2d2d30] bg-[#1f1f1f] px-3 py-2 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-[#8b949e]">
               Find in workspace
             </div>
-            {[
-              `file:${tabLabel}`,
-              "filter: active turn",
-              "scope: current room",
-            ].map((entry) => (
-              <div
+            {renderedSearchItems.map((entry, index) => (
+              <button
                 key={entry}
-                className="rounded-[8px] border border-[#2d2d30] bg-[#1f1f1f] px-3 py-2 text-[0.8rem] text-[#c9d1d9]"
+                type="button"
+                onClick={() =>
+                  setActiveDocument(index === 0 ? "editor" : index === 1 ? "notes" : "settings")
+                }
+                className="block w-full rounded-[8px] border border-[#2d2d30] bg-[#1f1f1f] px-3 py-2 text-left text-[0.8rem] text-[#c9d1d9] transition hover:border-[#3a3d41] hover:text-[#e6edf3]"
               >
                 {entry}
-              </div>
+              </button>
             ))}
           </div>
         );
@@ -96,27 +200,30 @@ export function EditorShell({
               "round constraints",
               "relay notes",
             ].map((entry, index) => (
-              <div
+              <button
                 key={entry}
+                type="button"
+                onClick={() =>
+                  setActiveDocument(index === 4 ? "notes" : index === 3 ? "settings" : "editor")
+                }
                 className={cn(
-                  "flex h-8 items-center gap-2 rounded-[6px] px-2 text-[0.8rem] text-[#9da7b3]",
-                  index === 2 && "bg-[#37373d] text-[#e6edf3]",
+                  "flex h-8 w-full items-center gap-2 rounded-[6px] px-2 text-left text-[0.8rem] text-[#9da7b3] transition hover:bg-[#2a2d2e] hover:text-[#e6edf3]",
+                  ((index === 4 && activeDocument === "notes") ||
+                    (index === 3 && activeDocument === "settings") ||
+                    (index <= 2 && activeDocument === "editor")) &&
+                    "bg-[#37373d] text-[#e6edf3]",
                 )}
               >
                 <FileCode2 className="h-3.5 w-3.5 shrink-0 text-[#7d8590]" />
                 <span className="truncate">{entry}</span>
-              </div>
+              </button>
             ))}
           </div>
         );
       case "tools":
         return (
           <div className="space-y-3 px-3 py-3">
-            {[
-              "Preview toggle ready",
-              "Autosave draft active",
-              "Only the last step is visible",
-            ].map((entry) => (
+            {renderedToolsLines.map((entry) => (
               <div
                 key={entry}
                 className="rounded-[8px] border border-[#2d2d30] bg-[#1f1f1f] px-3 py-2 text-[0.8rem] text-[#c9d1d9]"
@@ -148,23 +255,69 @@ export function EditorShell({
       default:
         return (
           <div className="space-y-1 px-2 py-3">
-            {treeItems.map((item) => (
-              <div
-                key={`${item.depth ?? 0}-${item.label}`}
-                className={cn(
-                  "flex h-8 items-center gap-2 rounded-[6px] px-2 text-[0.82rem] text-[#9da7b3]",
-                  item.active && "bg-[#37373d] text-[#e6edf3]",
-                )}
-                style={{ paddingLeft: `${0.5 + (item.depth ?? 0) * 0.9}rem` }}
-              >
-                <FileCode2 className="h-3.5 w-3.5 shrink-0 text-[#7d8590]" />
-                <span className="truncate">{item.label}</span>
-              </div>
-            ))}
+            {treeItems.map((item, index) => {
+              if (!isTreeItemVisible(treeItems, index, openFolders)) {
+                return null;
+              }
+
+              const isFolder = item.kind === "folder";
+              const isOpen = isFolder ? openFolders.has(item.label) : false;
+              const itemDocument = getDocumentForTreeItem(item, tabLabel);
+              const isActiveDocument = itemDocument === activeDocument;
+              const Icon = isFolder ? (isOpen ? FolderOpen : Folder) : FileCode2;
+
+              return (
+                <button
+                  key={`${item.depth ?? 0}-${item.label}`}
+                  type="button"
+                  onClick={() => {
+                    if (isFolder) {
+                      setOpenFolders((current) => {
+                        const next = new Set(current);
+                        if (next.has(item.label)) {
+                          next.delete(item.label);
+                        } else {
+                          next.add(item.label);
+                        }
+                        return next;
+                      });
+                      return;
+                    }
+
+                    if (itemDocument) {
+                      setActiveDocument(itemDocument);
+                    }
+                  }}
+                  className={cn(
+                    "flex h-8 w-full items-center gap-2 rounded-[6px] px-2 text-left text-[0.82rem] text-[#9da7b3] transition hover:bg-[#2a2d2e] hover:text-[#e6edf3]",
+                    isActiveDocument && "bg-[#37373d] text-[#e6edf3]",
+                  )}
+                  style={{ paddingLeft: `${0.5 + (item.depth ?? 0) * 0.9}rem` }}
+                >
+                  {isFolder ? (
+                    isOpen ? (
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#7d8590]" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#7d8590]" />
+                    )
+                  ) : null}
+                  <Icon className="h-3.5 w-3.5 shrink-0 text-[#7d8590]" />
+                  <span className="truncate">{item.label}</span>
+                </button>
+              );
+            })}
           </div>
         );
     }
-  }, [activePane, tabLabel, treeItems]);
+  }, [
+    activeDocument,
+    activePane,
+    openFolders,
+    renderedSearchItems,
+    renderedToolsLines,
+    tabLabel,
+    treeItems,
+  ]);
 
   return (
     <div className={cn("panel-ink min-w-0 overflow-hidden rounded-[16px]", className)}>
@@ -179,7 +332,32 @@ export function EditorShell({
         </span>
         <span className="hidden text-[0.68rem] sm:inline">relay-workspace</span>
       </div>
-      <div className="grid min-h-0 xl:grid-cols-[46px_208px_minmax(0,1fr)]">
+      <div className="border-b border-[#2d2d30] bg-[#181818] px-3 py-2 xl:hidden">
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {railItems.map((item) => {
+            const Icon = item.icon;
+            const active = item.id === activePane;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setActivePane(item.id)}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-2 rounded-[8px] border px-3 py-1.5 font-mono text-[0.68rem] uppercase tracking-[0.14em] transition",
+                  active
+                    ? "border-[#264f78] bg-[#0b2538] text-[#e6edf3]"
+                    : "border-[#2d2d30] bg-[#111317] text-[#8b949e] hover:text-[#e6edf3]",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="grid min-h-0 xl:grid-cols-[46px_220px_minmax(0,1fr)]">
         <div className="hidden border-r border-[#2d2d30] bg-[#181818] xl:flex xl:flex-col xl:items-center xl:py-2">
           {railItems.map((item) => {
             const Icon = item.icon;
@@ -193,20 +371,20 @@ export function EditorShell({
                 aria-label={item.label}
                 aria-pressed={active}
                 onClick={() => setActivePane(item.id)}
-              className={cn(
+                className={cn(
                   "relative mb-1 inline-flex h-11 w-full items-center justify-center text-[#6e7681] transition hover:bg-[#22272e] hover:text-[#e6edf3]",
                   active && "text-[#e6edf3]",
-              )}
-            >
+                )}
+              >
                 {active ? (
-                <span className="absolute left-0 top-2 h-7 w-0.5 rounded-full bg-[#007acc]" />
-              ) : null}
-              <Icon className="h-4 w-4" />
+                  <span className="absolute left-0 top-2 h-7 w-0.5 rounded-full bg-[#007acc]" />
+                ) : null}
+                <Icon className="h-4 w-4" />
               </button>
             );
           })}
         </div>
-        <div className="hidden border-r border-[#2d2d30] bg-[#252526] xl:block">
+        <div className="border-b border-[#2d2d30] bg-[#252526] xl:border-b-0 xl:border-r">
           <div className="border-b border-[#2d2d30] px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
             {sidebarLabel}
           </div>
@@ -214,54 +392,60 @@ export function EditorShell({
         </div>
         <div className="min-w-0 bg-[#1e1e1e]">
           <div className="flex items-end gap-1 overflow-x-auto border-b border-[#2d2d30] bg-[#252526] pl-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab("editor")}
-              className={cn(
-                "flex min-w-0 shrink-0 items-center gap-2 rounded-t-[6px] border-x border-t px-3 py-2 text-[0.78rem] transition",
-                activeTab === "editor"
-                  ? "border-[#2d2d30] bg-[#1e1e1e] text-[#e6edf3]"
-                  : "border-transparent bg-[#2d2d2d] text-[#8b949e] hover:text-[#e6edf3]",
-              )}
-            >
-              <FileCode2 className="h-3.5 w-3.5 text-[#6cb6ff]" />
-              <span className="truncate">{tabLabel}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("notes")}
-              className={cn(
-                "hidden shrink-0 rounded-t-[6px] border-x border-t px-3 py-2 text-[0.78rem] transition md:block",
-                activeTab === "notes"
-                  ? "border-[#2d2d30] bg-[#1e1e1e] text-[#e6edf3]"
-                  : "border-transparent bg-[#2d2d2d] text-[#7d8590] hover:text-[#e6edf3]",
-              )}
-            >
-              README.md
-            </button>
+            {documentTabs.map((tab) => {
+              const Icon = tab.icon;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveDocument(tab.id)}
+                  className={cn(
+                    "flex min-w-0 shrink-0 items-center gap-2 rounded-t-[6px] border-x border-t px-3 py-2 text-[0.78rem] transition",
+                    activeDocument === tab.id
+                      ? "border-[#2d2d30] bg-[#1e1e1e] text-[#e6edf3]"
+                      : "border-transparent bg-[#2d2d2d] text-[#8b949e] hover:text-[#e6edf3]",
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "h-3.5 w-3.5",
+                      tab.id === "settings"
+                        ? "text-[#4ec9b0]"
+                        : tab.id === "notes"
+                          ? "text-[#ce9178]"
+                          : "text-[#6cb6ff]",
+                    )}
+                  />
+                  <span className="truncate">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
           <div className="min-h-0 min-w-0">
-            {activeTab === "editor" ? (
+            {activeDocument === "editor" ? (
               children
+            ) : activeDocument === "settings" ? (
+              <div className="grid gap-3 bg-[#1e1e1e] px-5 py-4 font-mono text-[13px] leading-7 text-[#c9d1d9]">
+                <p className="text-[#4ec9b0]">{`// ${settingsTitle}`}</p>
+                {(settingsLines ?? []).map((line, index) => (
+                  <p key={`${line}-${index}`} className="whitespace-pre-wrap break-words">
+                    {line}
+                  </p>
+                ))}
+              </div>
             ) : (
               <div className="grid gap-4 bg-[#1e1e1e] px-5 py-4 font-mono text-[13px] leading-7 text-[#c9d1d9]">
-                <p className="text-[#4ec9b0]"># Relay workspace notes</p>
-                <p>
-                  <span className="text-[#569cd6]">active_file</span>
-                  <span className="text-[#d4d4d4]">:</span>{" "}
-                  <span className="text-[#ce9178]">{tabLabel}</span>
-                </p>
-                <p>
-                  <span className="text-[#569cd6]">workspace</span>
-                  <span className="text-[#d4d4d4]">:</span>{" "}
-                  <span className="text-[#ce9178]">{title}</span>
-                </p>
-                <p className="text-[#6a9955]">
-                  {"// Use the left rail to inspect search, outline, tools, and settings."}
-                </p>
-                <p className="text-[#6a9955]">
-                  {"// Relay only shows the previous step until the reveal stage."}
-                </p>
+                <p className="text-[#4ec9b0]">{`# ${notesTitle}`}</p>
+                {(notesLines ?? [
+                  `active_file: ${tabLabel}`,
+                  `workspace: ${title}`,
+                  "// Use the rail to inspect search, notes, and settings.",
+                ]).map((line, index) => (
+                  <p key={`${line}-${index}`} className="whitespace-pre-wrap break-words">
+                    {line}
+                  </p>
+                ))}
               </div>
             )}
           </div>

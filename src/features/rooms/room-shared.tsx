@@ -41,6 +41,18 @@ export function ReadonlyCode({
         language={language}
         readOnly
         height={height}
+        notesLines={[
+          "# Relay viewer notes",
+          `language: ${language}`,
+          "// Read-only view. Use preview if this snippet supports the browser sandbox.",
+        ]}
+        settingsLines={[
+          "{",
+          `  "language": "${language}",`,
+          `  "readOnly": true,`,
+          `  "previewEnabled": ${canPreview ? "true" : "false"}`,
+          "}",
+        ]}
         footer={
           <div className="flex items-center justify-between gap-3">
             <span className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
@@ -59,7 +71,14 @@ export function ReadonlyCode({
           </div>
         }
       />
-      {previewOpen ? <HtmlPreviewPanel snippet={value} language={language} height={260} /> : null}
+      {previewOpen ? (
+        <HtmlPreviewPanel
+          snippet={value}
+          language={language}
+          height={260}
+          autoRun
+        />
+      ) : null}
     </div>
   );
 }

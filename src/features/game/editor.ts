@@ -165,11 +165,27 @@ export function getEditorTreeItems(language: CodeLanguage) {
   const filename = getEditorFilename(language);
 
   return [
-    { label: "relay-room", depth: 0 },
-    { label: "src", depth: 1 },
-    { label: filename, depth: 2, active: true },
-    { label: "README.md", depth: 1 },
-    { label: "room.settings.json", depth: 1 },
+    { label: "relay-room", depth: 0, kind: "folder" as const },
+    { label: "src", depth: 1, kind: "folder" as const },
+    {
+      label: filename,
+      depth: 2,
+      active: true,
+      kind: "file" as const,
+      documentId: "editor" as const,
+    },
+    {
+      label: "README.md",
+      depth: 1,
+      kind: "file" as const,
+      documentId: "notes" as const,
+    },
+    {
+      label: "room.settings.json",
+      depth: 1,
+      kind: "file" as const,
+      documentId: "settings" as const,
+    },
   ];
 }
 
