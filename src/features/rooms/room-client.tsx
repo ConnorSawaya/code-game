@@ -71,6 +71,11 @@ export function RoomClient({
   const isDemoRoom = Boolean(snapshot?.isDemo);
   const task = snapshot ? deriveViewerTask(snapshot) : null;
   const draftKey = getDraftKey(snapshot ?? null, task?.chainId ?? null);
+  const isActiveGamePhase = Boolean(
+    snapshot?.game &&
+      snapshot.game.phase !== "reveal" &&
+      snapshot.game.phase !== "summary",
+  );
 
   const refreshRoom = useCallback(() => {
     startTransition(() => {
@@ -252,56 +257,58 @@ export function RoomClient({
 
   return (
     <div className="section-grid">
-      <section className="grid gap-6 2xl:grid-cols-[minmax(0,1.16fr)_minmax(320px,0.84fr)]">
-        <RoomHeader
-          snapshot={snapshot}
-          timeRemaining={timeRemaining}
-          onCopyCode={() => void handleCopyCode()}
-          onCopyReplay={() => void handleCopyReplay()}
-        />
-        <RoomRosterCard
-          snapshot={snapshot}
-          submitting={submitting}
-          onToggleReady={() =>
-            isDemoRoom
-              ? handleDemoMutation("ready", toggleDemoReady)
-              : void handleApi("ready", async () => {
-                  await postJson(`/api/room/${snapshot.code}/ready`, {});
-                })
-          }
-          onStart={() =>
-            isDemoRoom
-              ? handleDemoMutation(
-                  "start",
-                  (current) => startDemoRoom(current),
-                  snapshot.status === "reveal" ? "Demo room reset." : "Demo game launched.",
-                )
-              : void handleApi("start", async () => {
-                  await postJson(`/api/room/${snapshot.code}/start`);
-                })
-          }
-          onQueueNextGame={() =>
-            isDemoRoom
-              ? handleDemoMutation("queue", toggleDemoQueue)
-              : void handleApi("queue", async () => {
-                  await postJson(`/api/room/${snapshot.code}/queue`, {});
-                })
-          }
-          onModerate={(memberId, ban) =>
-            isDemoRoom
-              ? toast.success(ban ? "Demo ban recorded." : "Demo kick recorded.")
-              : void handleApi("moderate", async () => {
-                  await postJson(`/api/room/${snapshot.code}/moderate`, {
-                    memberId,
-                    ban,
-                    reason: ban ? "Banned by host" : "Removed by host",
-                  });
-                })
-          }
-        />
-      </section>
+      {!isActiveGamePhase ? (
+        <section className="grid gap-6 2xl:grid-cols-[minmax(0,1.16fr)_minmax(320px,0.84fr)]">
+          <RoomHeader
+            snapshot={snapshot}
+            timeRemaining={timeRemaining}
+            onCopyCode={() => void handleCopyCode()}
+            onCopyReplay={() => void handleCopyReplay()}
+          />
+          <RoomRosterCard
+            snapshot={snapshot}
+            submitting={submitting}
+            onToggleReady={() =>
+              isDemoRoom
+                ? handleDemoMutation("ready", toggleDemoReady)
+                : void handleApi("ready", async () => {
+                    await postJson(`/api/room/${snapshot.code}/ready`, {});
+                  })
+            }
+            onStart={() =>
+              isDemoRoom
+                ? handleDemoMutation(
+                    "start",
+                    (current) => startDemoRoom(current),
+                    snapshot.status === "reveal" ? "Demo room reset." : "Demo game launched.",
+                  )
+                : void handleApi("start", async () => {
+                    await postJson(`/api/room/${snapshot.code}/start`);
+                  })
+            }
+            onQueueNextGame={() =>
+              isDemoRoom
+                ? handleDemoMutation("queue", toggleDemoQueue)
+                : void handleApi("queue", async () => {
+                    await postJson(`/api/room/${snapshot.code}/queue`, {});
+                  })
+            }
+            onModerate={(memberId, ban) =>
+              isDemoRoom
+                ? toast.success(ban ? "Demo ban recorded." : "Demo kick recorded.")
+                : void handleApi("moderate", async () => {
+                    await postJson(`/api/room/${snapshot.code}/moderate`, {
+                      memberId,
+                      ban,
+                      reason: ban ? "Banned by host" : "Removed by host",
+                    });
+                  })
+            }
+          />
+        </section>
+      ) : null}
 
-      {isDemoRoom ? (
+      {isDemoRoom && !isActiveGamePhase ? (
         <Card className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
@@ -459,7 +466,7 @@ export function RoomClient({
         />
       ) : null}
 
-      {!isDemoRoom && snapshot.settings.visibility === "public" ? (
+      {!isActiveGamePhase && !isDemoRoom && snapshot.settings.visibility === "public" ? (
         <RoomReportCard
           reportReason={reportReason}
           setReportReason={setReportReason}

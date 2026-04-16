@@ -148,16 +148,15 @@ export function RoomActivePhase({
         isCodeTurn ? "grid-cols-1" : "2xl:grid-cols-[minmax(0,1fr)_300px]",
       )}
     >
-      <Card className="min-w-0 space-y-5">
+      <Card className={cn("min-w-0", isCodeTurn ? "space-y-4 p-4 sm:p-5" : "space-y-5")}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge>{phaseLabel}</Badge>
-              {snapshot.isDemo ? <Badge>Demo controls available</Badge> : null}
               {task?.language ? <Badge>{getLanguageLabel(task.language)}</Badge> : null}
             </div>
             <div>
-              <CardTitle className="text-2xl sm:text-3xl">
+              <CardTitle className={cn("text-2xl sm:text-3xl", isCodeTurn && "text-xl sm:text-2xl")}>
                 {task
                   ? task.expectedStepType === "prompt"
                     ? "Seed the first bad idea"
@@ -171,7 +170,7 @@ export function RoomActivePhase({
                   ? task.expectedStepType === "prompt"
                     ? "Use a custom opener or steal one from the built-in packs."
                     : task.expectedStepType === "code"
-                      ? "Write one clear step, run it if you want, then send it on."
+                      ? "Write one clear step, preview it if you want, then send it on."
                       : "Focus on visible behavior, not implementation details. The next player only gets your description."
                   : "Live rounds stay visible here, and spectators can queue for the next lobby after the match ends."}
               </CardDescription>
@@ -209,13 +208,13 @@ export function RoomActivePhase({
           <>
             {task.expectedStepType === "code" ? (
               <div className="space-y-4">
-                <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.45fr)_390px]">
+                <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.7fr)_340px]">
                   <div className="space-y-4">
                     <MonacoCodeEditor
                       value={draft}
                       language={task.language ?? "javascript"}
                       onChange={setDraft}
-                      height={540}
+                      height={640}
                       notesLines={editorNotes}
                       settingsLines={editorSettings}
                       toolsLines={[
@@ -249,7 +248,7 @@ export function RoomActivePhase({
                         snippet={draft}
                         language={task.language ?? "html_css_js"}
                         autoRun={false}
-                        height={540}
+                        height={640}
                       />
                     ) : (
                       <div className="stack-panel space-y-3 px-5 py-5">

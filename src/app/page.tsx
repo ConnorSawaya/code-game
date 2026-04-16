@@ -3,15 +3,10 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Eye,
   Gamepad2,
-  MessagesSquare,
   PlayCircle,
-  Shield,
   TerminalSquare,
-  TimerReset,
   Users,
-  WandSparkles,
 } from "lucide-react";
 import { EditorShell } from "@/components/editor/editor-shell";
 import { useDemoMode } from "@/components/providers/demo-mode-provider";
@@ -42,32 +37,22 @@ const features = [
   {
     icon: Users,
     title: "Live rooms",
-    body: "Private codes, public lobbies, reconnect protection, spectators, and next-game queueing.",
+    body: "Private codes, public lobbies, reconnect protection, and spectator support.",
   },
   {
     icon: TerminalSquare,
     title: "Real editor",
-    body: "A VS Code-like workspace with Monaco, language-aware syntax, limits, and dark replay viewing.",
+    body: "Monaco, language-aware syntax, limits, and runtime preview where it makes sense.",
   },
   {
-    icon: MessagesSquare,
-    title: "Nicknames over accounts",
-    body: "Guests get in instantly. Upgrade later without losing replay history or room ownership.",
-  },
-  {
-    icon: Shield,
-    title: "Filters and moderation",
-    body: "Profanity checks, reports, kick and ban controls, Turnstile, and sensible public-room guardrails.",
-  },
-  {
-    icon: Eye,
+    icon: Gamepad2,
     title: "Reveal playback",
-    body: "Animated chain reveals, reaction counters, favorite moments, and unlisted replay links.",
+    body: "Animated reveal flow, reactions, favorites, and replay links.",
   },
   {
     icon: PlayCircle,
     title: "Demo mode",
-    body: "Temporary password unlock for mock rooms, fake data, and admin testing controls while backend pieces evolve.",
+    body: "Temporary password unlock for mock rooms and testing controls while backend pieces evolve.",
   },
 ];
 
@@ -173,7 +158,6 @@ export default function HomePage() {
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-2">
               <Badge>Multiplayer code telephone</Badge>
-              <Badge>Built for hack nights</Badge>
               {demoMode ? <Badge>Demo mode unlocked</Badge> : null}
             </div>
             <div className="space-y-4">
@@ -197,25 +181,16 @@ export default function HomePage() {
                 </Button>
               </Link>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="stack-panel px-4 py-4">
-                <p className="label-mono text-[color:var(--color-text-muted)]">Players</p>
-                <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-                  3-12
-                </p>
-              </div>
-              <div className="stack-panel px-4 py-4">
-                <p className="label-mono text-[color:var(--color-text-muted)]">Languages</p>
-                <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-                  HTML JS TS Py
-                </p>
-              </div>
-              <div className="stack-panel px-4 py-4">
-                <p className="label-mono text-[color:var(--color-text-muted)]">Prompt packs</p>
-                <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-                  600+
-                </p>
-              </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="surface-pill rounded-full px-3 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]">
+                3-12 players
+              </span>
+              <span className="surface-pill rounded-full px-3 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]">
+                HTML / JS / TS / Py
+              </span>
+              <span className="surface-pill rounded-full px-3 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]">
+                600+ prompts
+              </span>
             </div>
           </div>
           <HeroWorkbench />
@@ -250,43 +225,48 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="features" className="grid gap-4">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <Badge>Features</Badge>
-            <h2 className="mt-3 font-display text-3xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-              Fast rounds. Weird outcomes. Surprisingly usable.
-            </h2>
-          </div>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-
-            return (
-              <Card key={feature.title} className="space-y-4">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] text-[color:var(--color-accent-hover)]">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle>{feature.title}</CardTitle>
-                  <CardDescription className="mt-2">{feature.body}</CardDescription>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+      <section id="features" className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <Card className="space-y-5">
-          <Badge>Built For Real Groups</Badge>
+          <Badge>Features</Badge>
           <div>
-            <CardTitle>Made for hackathons, game jams, classrooms, and friend groups.</CardTitle>
+            <CardTitle>Only the useful stuff stays on the page.</CardTitle>
             <CardDescription className="mt-2">
-              Relay works best when people are half serious and half trying to make each other laugh.
-              It is a coding game, but the payoff is social.
+              Rooms, editor, reveal, moderation, and demo tools. No extra filler.
             </CardDescription>
+          </div>
+          <div className="space-y-3">
+            {features.map((feature) => {
+              const Icon = feature.icon;
+
+              return (
+                <div
+                  key={feature.title}
+                  className="flex items-start gap-3 rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4"
+                >
+                  <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[color:var(--color-border)] bg-[rgba(255,255,255,0.02)] text-[color:var(--color-accent-hover)]">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[color:var(--color-text-strong)]">{feature.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-[color:var(--color-text-muted)]">
+                      {feature.body}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+        <Card className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <Badge>Built For</Badge>
+              <CardTitle className="mt-3">Hackathons, classrooms, and friend groups.</CardTitle>
+              <CardDescription className="mt-2">
+                Works best when people are half serious and half trying to make each other laugh.
+              </CardDescription>
+            </div>
+            <Gamepad2 className="h-5 w-5 text-[color:var(--color-accent-hover)]" />
           </div>
           <div className="flex flex-wrap gap-2">
             {useCases.map((useCase) => (
@@ -297,35 +277,6 @@ export default function HomePage() {
                 {useCase}
               </span>
             ))}
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Room spin-up</p>
-              <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
-                Create a room fast, tweak the vibe, and share one code.
-              </p>
-            </div>
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Reveal payoff</p>
-              <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
-                Playback, favorites, and replay links turn the ending into the event.
-              </p>
-            </div>
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Low friction</p>
-              <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
-                Guests get in quickly. Real accounts can wait until later.
-              </p>
-            </div>
-          </div>
-        </Card>
-        <Card className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <Badge>Tonight&apos;s Demo Rooms</Badge>
-              <CardTitle className="mt-3">Believable rooms, not placeholder fluff.</CardTitle>
-            </div>
-            <Gamepad2 className="h-5 w-5 text-[color:var(--color-accent-hover)]" />
           </div>
           <div className="space-y-3">
             {demoRooms.map((roomName, index) => (
@@ -344,49 +295,11 @@ export default function HomePage() {
                     <Users className="h-4 w-4 text-[color:var(--color-accent-hover)]" />
                     {4 + index}
                   </span>
-                  <span className="inline-flex items-center gap-2">
-                    <TimerReset className="h-4 w-4 text-[color:var(--color-warning)]" />
-                    {index === 2 ? "reveal" : "live"}
-                  </span>
                 </div>
               </div>
             ))}
           </div>
-          <div className="stack-panel px-4 py-4">
-            <p className="label-mono text-[color:var(--color-text-muted)]">Good room copy matters</p>
-            <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
-              Strong prompts, believable file names, and a grounded tool-like UI make the whole product feel
-              like something actual devs would pull up during a jam.
-            </p>
-          </div>
         </Card>
-      </section>
-
-      <section className="rounded-[20px] border border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(22,27,34,0.98),rgba(12,18,24,0.98))] p-6 shadow-[var(--shadow-panel)] sm:p-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div>
-            <Badge>Ready To Try It</Badge>
-            <h2 className="mt-3 font-display text-3xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-              Start a room and see what your friends turn your code into.
-            </h2>
-            <p className="mt-3 max-w-2xl text-base leading-8 text-[color:var(--color-text-soft)]">
-              Built for quick starts, short rounds, and the kind of cursed creativity that only appears when
-              too many devs touch the same idea.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/play">
-              <Button size="lg">
-                Start a Room
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Button variant="secondary" size="lg" onClick={openDialog}>
-              <WandSparkles className="h-4 w-4" />
-              Try Demo
-            </Button>
-          </div>
-        </div>
       </section>
 
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--color-border)] pt-4 text-sm text-[color:var(--color-text-muted)]">

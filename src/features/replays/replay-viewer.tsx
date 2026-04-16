@@ -97,25 +97,10 @@ export function ReplayViewer({
               {loading === "pin" ? "Saving..." : pinned ? "Unpin replay" : "Pin replay"}
             </Button>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Chains</p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-                {replay.chains.length}
-              </p>
-            </div>
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Skill</p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-                {replay.skillMode}
-              </p>
-            </div>
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Room</p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-                {replay.roomCode}
-              </p>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge>{replay.chains.length} chains</Badge>
+            <Badge>{replay.skillMode}</Badge>
+            <Badge>{replay.roomCode}</Badge>
           </div>
         </Card>
 
@@ -133,22 +118,29 @@ export function ReplayViewer({
               <Flag className="h-5 w-5 text-[color:var(--color-danger)]" />
             )}
           </div>
-          <Field>
-            <FieldLabel>Reason</FieldLabel>
-            <Input value={reportReason} onChange={(event) => setReportReason(event.target.value)} />
-          </Field>
-          <Field>
-            <FieldLabel>Details</FieldLabel>
-            <Textarea minRows={4} value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} />
-          </Field>
-          <TurnstileWidget onToken={setTurnstileToken} />
-          <Button
-            variant="secondary"
-            onClick={handleReport}
-            disabled={loading === "report" || reportReason.trim().length < 4}
-          >
-            {loading === "report" ? "Sending..." : "Report replay"}
-          </Button>
+          <details className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
+            <summary className="cursor-pointer list-none text-sm font-semibold text-[color:var(--color-text-strong)] [&::-webkit-details-marker]:hidden">
+              Open report form
+            </summary>
+            <div className="mt-4 space-y-4">
+              <Field>
+                <FieldLabel>Reason</FieldLabel>
+                <Input value={reportReason} onChange={(event) => setReportReason(event.target.value)} />
+              </Field>
+              <Field>
+                <FieldLabel>Details</FieldLabel>
+                <Textarea minRows={4} value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} />
+              </Field>
+              <TurnstileWidget onToken={setTurnstileToken} />
+              <Button
+                variant="secondary"
+                onClick={handleReport}
+                disabled={loading === "report" || reportReason.trim().length < 4}
+              >
+                {loading === "report" ? "Sending..." : "Report replay"}
+              </Button>
+            </div>
+          </details>
         </Card>
       </section>
 

@@ -90,16 +90,10 @@ export function AccountPanel({
       <div className="section-grid">
         <Card className="mx-auto max-w-2xl space-y-5 p-8 text-center">
           <Badge>Account</Badge>
-          <CardTitle>Guest-first product, very light account surface.</CardTitle>
+          <CardTitle>Light account surface.</CardTitle>
           <CardDescription>
-            Real account data appears here once Supabase auth is configured. For now, you can still use demo mode and the play flow without a traditional sign-in screen.
+            Real account data appears here once Supabase auth is configured.
           </CardDescription>
-          <div className="stack-panel px-5 py-5 text-left">
-            <p className="label-mono text-[color:var(--color-text-muted)]">What belongs here later</p>
-            <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
-              Email linking, portable replay history, and any lightweight profile settings that survive across sessions.
-            </p>
-          </div>
         </Card>
       </div>
     );
@@ -118,22 +112,12 @@ export function AccountPanel({
           <div>
             <CardTitle>{viewer.nickname}</CardTitle>
             <CardDescription className="mt-2">
-              Guests can play instantly. Add an email when you want portable history and pinned replays that survive cleanup.
+              Add an email when you want portable history and pinned replays that survive cleanup.
             </CardDescription>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Identity</p>
-              <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-                {viewer.isGuest ? "Guest" : "Linked"}
-              </p>
-            </div>
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Replays</p>
-              <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-                {replays.length}
-              </p>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge>{viewer.isGuest ? "Guest" : "Linked"}</Badge>
+            <Badge>{replays.length} replays</Badge>
           </div>
           <Field>
             <FieldLabel>Email upgrade</FieldLabel>
@@ -161,7 +145,7 @@ export function AccountPanel({
             <Badge>Replay shelf</Badge>
             <CardTitle className="mt-3">Saved game history</CardTitle>
             <CardDescription className="mt-2">
-              Pin the good ones. Open the cursed ones again later. Keep the account surface simple.
+              Pin the good ones. Open the cursed ones later.
             </CardDescription>
           </div>
           <div className="space-y-3">
