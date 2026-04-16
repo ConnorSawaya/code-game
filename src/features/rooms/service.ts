@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import type { CodeLanguage, LanguageMode, RoomVisibility, SkillMode } from "@/features/game/types";
+import { normalizeLanguageSettings } from "@/features/game/logic";
 import { ensureReplaySnapshotStored } from "@/features/replays/snapshot";
 import { createSupabaseServerClient } from "@/features/supabase/server";
 import { getSupabaseAdminClient } from "@/features/supabase/admin";
@@ -12,6 +13,21 @@ const codeLanguageSchema = z.enum([
   "python",
   "typescript",
 ]);
+
+function normalizeRoomLanguagePayload<T extends {
+  skillMode: SkillMode;
+  languageMode: LanguageMode;
+  languagePool: CodeLanguage[];
+  singleLanguage?: CodeLanguage | null;
+}>(value: T) {
+  const normalized = normalizeLanguageSettings(value);
+
+  return {
+    ...value,
+    languagePool: normalized.languagePool,
+    singleLanguage: normalized.singleLanguage,
+  };
+}
 
 export const createRoomSchema = z.object({
   nickname: z.string().trim().min(2).max(28),
@@ -27,7 +43,7 @@ export const createRoomSchema = z.object({
   quickPlayDiscoverable: z.boolean().default(false),
   turnstileToken: z.string().optional(),
   demoMode: z.boolean().optional(),
-});
+}).transform((value) => normalizeRoomLanguagePayload(value));
 
 export const joinRoomSchema = z.object({
   roomCode: z.string().trim().min(5).max(5),
@@ -54,7 +70,7 @@ export const updateRoomSettingsSchema = z.object({
   playerCap: z.number().int().min(3).max(12),
   profanityFilterEnabled: z.boolean(),
   quickPlayDiscoverable: z.boolean(),
-});
+}).transform((value) => normalizeRoomLanguagePayload(value));
 
 export const submitRoundSchema = z.object({
   text: z.string().max(1200),

@@ -11,16 +11,17 @@ import {
   getPhaseForRound,
   getSkillModeConfig,
   getStepTypeForRound,
+  normalizeRoomSettings,
 } from "@/features/game/logic";
 import {
   buildDemoChains,
   buildDemoCode,
   buildDemoDescription,
+  buildDemoLobbyRoomViewData,
   buildDemoPrompt,
   buildDemoRoomViewData,
   demoNowIso,
   getDemoReplaySlugForRoom,
-  getDemoScenarioByCode,
 } from "@/features/demo/mock-data";
 
 function cloneDemoData(data: RoomViewData) {
@@ -176,7 +177,8 @@ export function startDemoRoom(data: RoomViewData) {
     currentCodeLanguage: null,
     replaySlug: getDemoReplaySlugForRoom(next.snapshot.code),
     chains: buildDemoChains(
-      getDemoScenarioByCode(next.snapshot.code) ?? getDemoScenarioByCode("BOSS1")!,
+      next.snapshot.code,
+      next.snapshot.settings,
       next.snapshot.members,
       next.snapshot.settings.roundCount,
     ).map((chain) => ({
@@ -196,9 +198,19 @@ export function startDemoRoom(data: RoomViewData) {
 
 export function resetDemoRoom(data: RoomViewData) {
   const currentUser = getCurrentUser(data.snapshot);
+  const snapshot = data.snapshot;
+
+  if (!snapshot) {
+    return (
+      buildDemoRoomViewData("BOSS1", currentUser?.nickname ?? "late-night-dev") ?? data
+    );
+  }
+
   return (
-    buildDemoRoomViewData(data.snapshot?.code ?? "BOSS1", currentUser?.nickname ?? "late-night-dev") ??
-    data
+    buildDemoLobbyRoomViewData(snapshot.code, currentUser?.nickname ?? "late-night-dev", {
+      roomName: snapshot.roomName,
+      settings: normalizeRoomSettings(snapshot.settings),
+    }) ?? data
   );
 }
 
@@ -242,7 +254,7 @@ export function saveDemoSettings(
     return next;
   }
 
-  next.snapshot.settings = settings;
+  next.snapshot.settings = normalizeRoomSettings(settings);
   return next;
 }
 

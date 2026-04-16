@@ -25,9 +25,9 @@ export function getDemoRoomCodeForSkillMode(
     case "advanced":
       return "SHDR5";
     case "intermediate":
-      return "LATE2";
+      return "BOSS1";
     case "beginner":
     default:
-      return "BOSS1";
+      return "LATE2";
   }
 }

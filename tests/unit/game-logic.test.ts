@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildRoomCode,
   deriveViewerTask,
+  getAllowedLanguagesForSkillMode,
   getCodeFallback,
   getCodeRoundLanguage,
   getStepTypeForRound,
+  normalizeLanguageSettings,
 } from "@/features/game/logic";
 import type { RoomSnapshot } from "@/features/game/types";
 
@@ -22,6 +24,23 @@ describe("game logic", () => {
     expect(getCodeRoundLanguage("rotate", [...pool], 1, 0, null)).toBe("javascript");
     expect(getCodeRoundLanguage("rotate", [...pool], 3, 0, null)).toBe("python");
     expect(getCodeRoundLanguage("random", [...pool], 1, 5, null)).toBe("typescript");
+  });
+
+  it("normalizes language settings against the selected skill mode", () => {
+    const normalized = normalizeLanguageSettings({
+      skillMode: "beginner",
+      languageMode: "single" as const,
+      languagePool: ["typescript", "javascript", "javascript"],
+      singleLanguage: "typescript" as const,
+    });
+
+    expect(getAllowedLanguagesForSkillMode("beginner")).toEqual([
+      "html_css_js",
+      "javascript",
+      "python",
+    ]);
+    expect(normalized.languagePool).toEqual(["javascript"]);
+    expect(normalized.singleLanguage).toBe("javascript");
   });
 
   it("returns language-appropriate fallback comments", () => {

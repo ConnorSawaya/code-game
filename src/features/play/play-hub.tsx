@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, startTransition } from "react";
+import { useEffect, useMemo, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -13,7 +13,14 @@ import {
 } from "lucide-react";
 import { useDemoMode } from "@/components/providers/demo-mode-provider";
 import { usePersistedNickname } from "@/features/auth/use-persisted-nickname";
-import { getSkillModeConfig, LANGUAGE_LABELS } from "@/features/game/logic";
+import { buildDemoLobbyRoomViewData } from "@/features/demo/mock-data";
+import { getDemoStorageKey } from "@/features/demo/room-state";
+import {
+  getAllowedLanguagesForSkillMode,
+  getSkillModeConfig,
+  LANGUAGE_LABELS,
+  normalizeRoomSettings,
+} from "@/features/game/logic";
 import { getPublicEnv } from "@/lib/env";
 import { postJson } from "@/lib/client-api";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -32,6 +39,10 @@ const demoShortcutRooms = [
   { code: "SHDR5", label: "Live spectator room", description: "Watch an in-progress room with believable data." },
   { code: "CURSD", label: "Reveal room", description: "Open the final playback stage immediately." },
 ];
+
+function arraysEqual<T>(left: T[], right: T[]) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
 
 export function PlayHub() {
   const router = useRouter();
@@ -58,7 +69,41 @@ export function PlayHub() {
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   const skillConfig = useMemo(() => getSkillModeConfig(skillMode), [skillMode]);
+  const availableLanguages = useMemo(
+    () => getAllowedLanguagesForSkillMode(skillMode),
+    [skillMode],
+  );
   const shouldUseDemoBackend = demoMode || !backendConfigured;
+
+  useEffect(() => {
+    const normalized = normalizeRoomSettings({
+      visibility,
+      playerCap,
+      roundCount,
+      skillMode,
+      languageMode,
+      languagePool,
+      singleLanguage,
+      profanityFilterEnabled: true,
+      quickPlayDiscoverable: visibility === "public",
+    });
+
+    if (!arraysEqual(normalized.languagePool, languagePool)) {
+      setLanguagePool(normalized.languagePool);
+    }
+
+    if (normalized.singleLanguage !== singleLanguage) {
+      setSingleLanguage(normalized.singleLanguage ?? normalized.languagePool[0]);
+    }
+  }, [
+    languageMode,
+    languagePool,
+    playerCap,
+    roundCount,
+    singleLanguage,
+    skillMode,
+    visibility,
+  ]);
 
   const handleToggleLanguage = (language: (typeof CODE_LANGUAGES)[number]) => {
     setLanguagePool((current) => {
@@ -100,21 +145,47 @@ export function PlayHub() {
 
     try {
       setLoadingAction("create");
-      const result = await postJson<{ room_code: string }>("/api/rooms/create", {
-        nickname,
-        roomName,
+      const normalizedSettings = normalizeRoomSettings({
         visibility,
+        playerCap,
+        roundCount,
         skillMode,
         languageMode,
         languagePool,
-        singleLanguage: languageMode === "single" ? singleLanguage : null,
-        roundCount,
-        playerCap,
+        singleLanguage,
         profanityFilterEnabled: true,
         quickPlayDiscoverable: visibility === "public",
+      });
+      const result = await postJson<{ room_code: string }>("/api/rooms/create", {
+        nickname,
+        roomName,
+        visibility: normalizedSettings.visibility,
+        skillMode: normalizedSettings.skillMode,
+        languageMode: normalizedSettings.languageMode,
+        languagePool: normalizedSettings.languagePool,
+        singleLanguage: normalizedSettings.singleLanguage,
+        roundCount: normalizedSettings.roundCount,
+        playerCap: normalizedSettings.playerCap,
+        profanityFilterEnabled: normalizedSettings.profanityFilterEnabled,
+        quickPlayDiscoverable: normalizedSettings.quickPlayDiscoverable,
         turnstileToken,
         demoMode: shouldUseDemoBackend,
       });
+
+      if (shouldUseDemoBackend && typeof window !== "undefined") {
+        const demoRoomData = buildDemoLobbyRoomViewData(result.room_code, nickname, {
+          roomName,
+          settings: normalizedSettings,
+        });
+
+        if (demoRoomData) {
+          window.localStorage.setItem(
+            getDemoStorageKey(result.room_code),
+            JSON.stringify(demoRoomData),
+          );
+        }
+      }
+
       navigateToRoom(result.room_code);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to create room.");
@@ -248,12 +319,17 @@ export function PlayHub() {
           </div>
           <Field>
             <FieldLabel>Skill Mode</FieldLabel>
-            <SegmentedControl
-              value={skillMode}
-              onChange={setSkillMode}
-              options={SKILL_MODES.map((mode) => ({
-                value: mode,
-                label: getSkillModeConfig(mode).label,
+              <SegmentedControl
+                value={skillMode}
+                onChange={(value) => {
+                  setSkillMode(value);
+                  if (value === "chaos" && languageMode === "single") {
+                    setLanguageMode("random");
+                  }
+                }}
+                options={SKILL_MODES.map((mode) => ({
+                  value: mode,
+                  label: getSkillModeConfig(mode).label,
               }))}
             />
           </Field>
@@ -313,7 +389,7 @@ export function PlayHub() {
           <Field>
             <FieldLabel>Language Pool</FieldLabel>
             <div className="flex flex-wrap gap-2">
-              {CODE_LANGUAGES.map((language) => (
+              {availableLanguages.map((language) => (
                 <SelectableChip
                   key={language}
                   selected={languagePool.includes(language)}

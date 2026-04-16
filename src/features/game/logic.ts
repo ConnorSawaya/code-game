@@ -3,8 +3,10 @@ import type {
   ChainSnapshot,
   CodeLanguage,
   GamePhase,
+  LanguageMode,
   PromptRecord,
   RoomSnapshot,
+  RoomSettings,
   SkillMode,
   SkillModeConfig,
   StepType,
@@ -56,6 +58,47 @@ export const LANGUAGE_LABELS: Record<CodeLanguage, string> = {
 
 export function getSkillModeConfig(skillMode: SkillMode) {
   return SKILL_MODE_CONFIG[skillMode];
+}
+
+export function getAllowedLanguagesForSkillMode(skillMode: SkillMode) {
+  return [...SKILL_MODE_CONFIG[skillMode].defaultLanguages];
+}
+
+export function normalizeLanguageSettings<T extends {
+  skillMode: SkillMode;
+  languageMode: LanguageMode;
+  languagePool: CodeLanguage[];
+  singleLanguage?: CodeLanguage | null;
+}>(settings: T): T & {
+  languagePool: CodeLanguage[];
+  singleLanguage: CodeLanguage;
+} {
+  const allowed = getAllowedLanguagesForSkillMode(settings.skillMode);
+  const filteredPool = Array.from(
+    new Set(settings.languagePool.filter((language) => allowed.includes(language))),
+  );
+  const languagePool = filteredPool.length > 0 ? filteredPool : allowed;
+  const singleLanguage =
+    settings.singleLanguage && languagePool.includes(settings.singleLanguage)
+      ? settings.singleLanguage
+      : languagePool[0];
+
+  return {
+    ...settings,
+    languagePool,
+    singleLanguage,
+  };
+}
+
+export function normalizeRoomSettings(settings: RoomSettings): RoomSettings {
+  const normalized = normalizeLanguageSettings(settings);
+
+  return {
+    ...settings,
+    languageMode: normalized.languageMode,
+    languagePool: normalized.languagePool,
+    singleLanguage: normalized.singleLanguage,
+  };
 }
 
 export function getStepTypeForRound(roundIndex: number): StepType {

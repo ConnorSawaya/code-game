@@ -1,7 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
 import type { RoomSnapshot } from "@/features/game/types";
-import { CODE_LANGUAGES } from "@/features/game/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,12 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { SelectableChip } from "@/components/ui/chip";
-import { getLanguageLabel, getSkillModeConfig } from "@/features/game/logic";
+import {
+  getAllowedLanguagesForSkillMode,
+  getLanguageLabel,
+  getSkillModeConfig,
+  normalizeRoomSettings,
+} from "@/features/game/logic";
 
 export function RoomLobby({
   snapshot,
@@ -25,6 +30,19 @@ export function RoomLobby({
   submitting: string | null;
 }) {
   const skillConfig = getSkillModeConfig(settingsDraft.skillMode);
+  const availableLanguages = useMemo(
+    () => getAllowedLanguagesForSkillMode(settingsDraft.skillMode),
+    [settingsDraft.skillMode],
+  );
+
+  const applySettingsDraft = (patch: Partial<RoomSnapshot["settings"]>) => {
+    setSettingsDraft(
+      normalizeRoomSettings({
+        ...settingsDraft,
+        ...patch,
+      }),
+    );
+  };
 
   return (
     <section className="grid gap-6 xl:grid-cols-[1fr_0.94fr]">
@@ -41,7 +59,7 @@ export function RoomLobby({
             <FieldLabel>Visibility</FieldLabel>
             <SegmentedControl
               value={settingsDraft.visibility}
-              onChange={(value) => setSettingsDraft({ ...settingsDraft, visibility: value })}
+              onChange={(value) => applySettingsDraft({ visibility: value })}
               options={[
                 { value: "private", label: "Private" },
                 { value: "public", label: "Public" },
@@ -52,7 +70,15 @@ export function RoomLobby({
             <FieldLabel>Skill Mode</FieldLabel>
             <SegmentedControl
               value={settingsDraft.skillMode}
-              onChange={(value) => setSettingsDraft({ ...settingsDraft, skillMode: value })}
+              onChange={(value) =>
+                applySettingsDraft({
+                  skillMode: value,
+                  languageMode:
+                    value === "chaos" && settingsDraft.languageMode === "single"
+                      ? "random"
+                      : settingsDraft.languageMode,
+                })
+              }
               options={[
                 { value: "beginner", label: "Beginner" },
                 { value: "intermediate", label: "Intermediate" },
@@ -65,7 +91,7 @@ export function RoomLobby({
             <FieldLabel>Language Mode</FieldLabel>
             <SegmentedControl
               value={settingsDraft.languageMode}
-              onChange={(value) => setSettingsDraft({ ...settingsDraft, languageMode: value })}
+              onChange={(value) => applySettingsDraft({ languageMode: value })}
               options={[
                 { value: "single", label: "Single" },
                 { value: "rotate", label: "Rotate" },
@@ -82,8 +108,7 @@ export function RoomLobby({
                 max={11}
                 value={settingsDraft.roundCount}
                 onChange={(event) =>
-                  setSettingsDraft({
-                    ...settingsDraft,
+                  applySettingsDraft({
                     roundCount: Number(event.target.value),
                   })
                 }
@@ -97,8 +122,7 @@ export function RoomLobby({
                 max={12}
                 value={settingsDraft.playerCap}
                 onChange={(event) =>
-                  setSettingsDraft({
-                    ...settingsDraft,
+                  applySettingsDraft({
                     playerCap: Number(event.target.value),
                   })
                 }
@@ -109,14 +133,13 @@ export function RoomLobby({
         <Field>
           <FieldLabel>Language Pool</FieldLabel>
           <div className="flex flex-wrap gap-2">
-            {CODE_LANGUAGES.map((language) => (
+            {availableLanguages.map((language) => (
               <SelectableChip
                 key={language}
                 selected={settingsDraft.languagePool.includes(language)}
                 label={getLanguageLabel(language)}
                 onClick={() =>
-                  setSettingsDraft({
-                    ...settingsDraft,
+                  applySettingsDraft({
                     languagePool: settingsDraft.languagePool.includes(language)
                       ? settingsDraft.languagePool.filter((entry) => entry !== language)
                       : [...settingsDraft.languagePool, language],
@@ -126,6 +149,19 @@ export function RoomLobby({
             ))}
           </div>
         </Field>
+        {settingsDraft.languageMode === "single" ? (
+          <Field>
+            <FieldLabel>Single Language</FieldLabel>
+            <SegmentedControl
+              value={settingsDraft.singleLanguage ?? settingsDraft.languagePool[0]}
+              onChange={(value) => applySettingsDraft({ singleLanguage: value })}
+              options={settingsDraft.languagePool.map((language) => ({
+                value: language,
+                label: getLanguageLabel(language),
+              }))}
+            />
+          </Field>
+        ) : null}
         <Button onClick={onSaveSettings} disabled={!snapshot.isHost || submitting === "settings"}>
           {submitting === "settings" ? "Saving..." : "Save room settings"}
         </Button>

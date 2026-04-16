@@ -11,6 +11,7 @@ import type {
 import {
   assignSeatForRound,
   getCodeRoundLanguage,
+  normalizeRoomSettings,
   getStepTypeForRound,
 } from "@/features/game/logic";
 import type { RoomViewData } from "@/features/rooms/queries";
@@ -32,6 +33,13 @@ type DemoScenario = {
   promptMood: string;
   joinMode: "host" | "spectator";
   demoReplaySlug: (typeof DEMO_REPLAY_SLUGS)[number];
+};
+
+type DemoRoomOverrides = {
+  roomName?: string;
+  status?: RoomSnapshot["status"];
+  joinMode?: DemoScenario["joinMode"];
+  settings?: RoomSettings;
 };
 
 const demoScenarios: Record<(typeof DEMO_ROOM_CODES)[number], DemoScenario> = {
@@ -114,7 +122,7 @@ export function demoNowIso(offsetSeconds = 0) {
 }
 
 function buildSettings(scenario: DemoScenario): RoomSettings {
-  return {
+  return normalizeRoomSettings({
     visibility: scenario.visibility,
     playerCap: scenario.playerCap,
     roundCount: scenario.roundCount,
@@ -124,7 +132,7 @@ function buildSettings(scenario: DemoScenario): RoomSettings {
     singleLanguage: scenario.singleLanguage,
     profanityFilterEnabled: true,
     quickPlayDiscoverable: scenario.quickPlayDiscoverable,
-  };
+  });
 }
 
 function buildMembers(
@@ -285,14 +293,18 @@ function buildStep(
 }
 
 export function buildDemoChains(
-  scenario: DemoScenario,
+  roomCode: string,
+  settings: Pick<
+    RoomSettings,
+    "skillMode" | "languageMode" | "languagePool" | "singleLanguage"
+  >,
   members: RoomMemberSnapshot[],
   totalRounds: number,
 ): ChainSnapshot[] {
   const activeMembers = members.filter((member) => member.role !== "spectator");
 
   return activeMembers.map((member) => {
-    const chainId = `demo-chain-${scenario.code}-${member.seatIndex}`;
+    const chainId = `demo-chain-${roomCode}-${member.seatIndex}`;
     const steps: ChainStep[] = [];
 
     for (let roundIndex = 0; roundIndex <= totalRounds; roundIndex += 1) {
@@ -307,11 +319,11 @@ export function buildDemoChains(
       const language =
         stepType === "code"
           ? getCodeRoundLanguage(
-              scenario.languageMode,
-              scenario.languagePool,
+              settings.languageMode,
+              settings.languagePool,
               roundIndex,
               member.seatIndex ?? 0,
-              scenario.singleLanguage,
+              settings.singleLanguage,
             )
           : null;
 
@@ -345,20 +357,23 @@ function trimChainsToRound(
 function buildBaseSnapshot(
   scenario: DemoScenario,
   nickname: string,
+  overrides: DemoRoomOverrides = {},
 ): RoomSnapshot {
-  const members = buildMembers(scenario, nickname);
+  const joinMode = overrides.joinMode ?? scenario.joinMode;
+  const members = buildMembers({ ...scenario, joinMode }, nickname);
   const currentUserMember = members.find((member) => member.isCurrentUser);
+  const settings = overrides.settings ?? buildSettings(scenario);
 
   return {
     id: `demo-room-${scenario.code}`,
     code: scenario.code,
-    roomName: scenario.roomName,
-    status: scenario.status,
+    roomName: overrides.roomName ?? scenario.roomName,
+    status: overrides.status ?? scenario.status,
     isDemo: true,
     isHost: currentUserMember?.role === "host",
     viewerRole: currentUserMember?.role ?? null,
     currentUserMemberId: currentUserMember?.id ?? null,
-    settings: buildSettings(scenario),
+    settings,
     members,
     game: null,
   };
@@ -375,7 +390,8 @@ export function buildDemoRoomViewData(
   const scenario = demoScenarios[code.toUpperCase() as keyof typeof demoScenarios];
   const snapshot = buildBaseSnapshot(scenario, nickname);
   const completeChains = buildDemoChains(
-    scenario,
+    scenario.code,
+    snapshot.settings,
     snapshot.members,
     snapshot.settings.roundCount,
   );
@@ -419,6 +435,33 @@ export function buildDemoRoomViewData(
     replaySlug: scenario.demoReplaySlug,
     chains: completeChains,
   };
+
+  return {
+    snapshot,
+    reactionsByStep: {},
+    favoritesByStep: {},
+  };
+}
+
+export function buildDemoLobbyRoomViewData(
+  code: string,
+  nickname: string,
+  overrides: {
+    roomName: string;
+    settings: RoomSettings;
+  },
+): RoomViewData | null {
+  if (!isDemoRoomCode(code)) {
+    return null;
+  }
+
+  const scenario = demoScenarios[code.toUpperCase() as keyof typeof demoScenarios];
+  const snapshot = buildBaseSnapshot(scenario, nickname, {
+    roomName: overrides.roomName,
+    status: "lobby",
+    joinMode: "host",
+    settings: normalizeRoomSettings(overrides.settings),
+  });
 
   return {
     snapshot,
@@ -487,7 +530,8 @@ export function buildDemoReplaySnapshot(slug: string): ReplaySnapshot | null {
     roomData.snapshot.status === "reveal"
       ? roomData.snapshot.game.chains
       : buildDemoChains(
-          demoScenarios[roomCode as keyof typeof demoScenarios],
+          roomCode,
+          roomData.snapshot.settings,
           roomData.snapshot.members,
           roomData.snapshot.settings.roundCount,
         );

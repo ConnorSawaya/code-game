@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { differenceInSeconds } from "date-fns";
 import { TestTube2, SkipForward, RotateCcw } from "lucide-react";
 import type { PromptRecord } from "@/features/game/types";
-import { deriveViewerTask } from "@/features/game/logic";
+import { deriveViewerTask, normalizeRoomSettings } from "@/features/game/logic";
 import {
   favoriteDemoStep,
   forceAdvanceDemoRoom,
@@ -65,6 +65,7 @@ export function RoomClient({
   const [reportDetails, setReportDetails] = useState("");
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
+  const [demoStorageReady, setDemoStorageReady] = useState(false);
 
   const snapshot = data.snapshot;
   const isDemoRoom = Boolean(snapshot?.isDemo);
@@ -86,6 +87,7 @@ export function RoomClient({
 
         if (storedState) {
           setData(JSON.parse(storedState) as RoomViewData);
+          setDemoStorageReady(true);
           return;
         }
       } catch {
@@ -94,16 +96,17 @@ export function RoomClient({
     }
 
     setData(initialData);
+    setDemoStorageReady(true);
   }, [initialData]);
 
   useEffect(() => {
-    if (snapshot?.isDemo && snapshot.code) {
+    if (snapshot?.isDemo && snapshot.code && demoStorageReady) {
       window.localStorage.setItem(getDemoStorageKey(snapshot.code), JSON.stringify(data));
     }
-  }, [data, snapshot?.code, snapshot?.isDemo]);
+  }, [data, demoStorageReady, snapshot?.code, snapshot?.isDemo]);
 
   useEffect(() => {
-    setSettingsDraft(snapshot?.settings ?? null);
+    setSettingsDraft(snapshot?.settings ? normalizeRoomSettings(snapshot.settings) : null);
   }, [snapshot?.code, snapshot?.settings]);
 
   useEffect(() => {
