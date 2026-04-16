@@ -15,7 +15,7 @@ export function FieldLabel({
   return (
     <p
       className={cn(
-        "text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted)]",
+        "font-mono text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]",
         className,
       )}
       {...props}
@@ -29,7 +29,7 @@ export function FieldHint({
 }: HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn("text-sm leading-6 text-[color:var(--color-muted)]", className)}
+      className={cn("text-sm leading-6 text-[color:var(--color-text-muted)]", className)}
       {...props}
     />
   );

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { buildDemoReplaySnapshot } from "@/features/demo/mock-data";
+import { hasSupabaseServerEnv, isDemoModeEnabled } from "@/features/demo/server";
 import { getServerEnv } from "@/lib/env";
 import { getSupabaseAdminClient } from "@/features/supabase/admin";
 import {
@@ -9,6 +11,18 @@ import {
 } from "@/features/replays/snapshot";
 
 export async function getReplayBySlug(slug: string): Promise<ReplaySnapshot | null> {
+  if (await isDemoModeEnabled()) {
+    const demoReplay = buildDemoReplaySnapshot(slug);
+
+    if (demoReplay) {
+      return demoReplay;
+    }
+  }
+
+  if (!hasSupabaseServerEnv()) {
+    return null;
+  }
+
   const supabase = getSupabaseAdminClient();
   const env = getServerEnv();
   const { data: replayRowResult } = await supabase

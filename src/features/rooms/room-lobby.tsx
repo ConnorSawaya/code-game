@@ -1,6 +1,7 @@
 "use client";
 
 import type { RoomSnapshot } from "@/features/game/types";
+import { CODE_LANGUAGES } from "@/features/game/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -108,7 +109,7 @@ export function RoomLobby({
         <Field>
           <FieldLabel>Language Pool</FieldLabel>
           <div className="flex flex-wrap gap-2">
-            {snapshot.settings.languagePool.map((language) => (
+            {CODE_LANGUAGES.map((language) => (
               <SelectableChip
                 key={language}
                 selected={settingsDraft.languagePool.includes(language)}

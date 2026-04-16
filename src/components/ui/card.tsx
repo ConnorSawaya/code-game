@@ -5,7 +5,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "panel-game rounded-[28px] p-5 backdrop-blur-sm sm:p-6",
+        "panel-game rounded-[18px] p-5 backdrop-blur-sm sm:p-6",
         className,
       )}
       {...props}
@@ -20,7 +20,7 @@ export function CardTitle({
   return (
     <h3
       className={cn(
-        "font-display text-xl font-semibold tracking-[-0.04em] text-[color:var(--color-ink)] sm:text-[1.4rem]",
+        "font-display text-xl font-semibold tracking-[-0.04em] text-[color:var(--color-text-strong)] sm:text-[1.35rem]",
         className,
       )}
       {...props}
@@ -35,7 +35,7 @@ export function CardDescription({
   return (
     <p
       className={cn(
-        "text-sm leading-6 text-[color:var(--color-muted)] sm:text-[0.95rem]",
+        "text-sm leading-6 text-[color:var(--color-text-muted)] sm:text-[0.95rem]",
         className,
       )}
       {...props}

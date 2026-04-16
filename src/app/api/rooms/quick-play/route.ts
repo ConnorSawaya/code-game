@@ -1,3 +1,5 @@
+import { getDemoRoomCodeForSkillMode } from "@/features/demo/shared";
+import { isDemoModeEnabled } from "@/features/demo/server";
 import { jsonError, jsonOk } from "@/lib/http";
 import { RouteError, getErrorDetails, requireUser } from "@/features/api/route-utils";
 import { enforceRateLimit, getClientIp } from "@/features/moderation/rate-limit";
@@ -6,8 +8,15 @@ import { quickPlay, quickPlaySchema } from "@/features/rooms/service";
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser();
     const body = quickPlaySchema.parse(await request.json());
+
+    if (body.demoMode && (await isDemoModeEnabled())) {
+      return jsonOk({
+        room_code: getDemoRoomCodeForSkillMode(body.skillMode),
+      });
+    }
+
+    const user = await requireUser();
     const ip = getClientIp(request.headers);
     const allowed = await enforceRateLimit({
       action: "quick-play",

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Flag, Pin } from "lucide-react";
+import { Flag, Pin, TestTube2 } from "lucide-react";
 import type { ReplaySnapshot } from "@/features/replays/snapshot";
 import { getLanguageLabel, getRoundLabel } from "@/features/game/logic";
 import { postJson } from "@/lib/client-api";
@@ -31,6 +31,12 @@ export function ReplayViewer({
   const [loading, setLoading] = useState<string | null>(null);
 
   const handlePin = async () => {
+    if (replay.isDemo) {
+      setPinned((current) => !current);
+      toast.success("Demo replay pin toggled locally.");
+      return;
+    }
+
     try {
       setLoading("pin");
       await postJson(`/api/replay/${replay.replaySlug}/pin`, {
@@ -47,6 +53,13 @@ export function ReplayViewer({
   };
 
   const handleReport = async () => {
+    if (replay.isDemo) {
+      toast.success("Demo replay report recorded locally.");
+      setReportReason("");
+      setReportDetails("");
+      return;
+    }
+
     try {
       setLoading("report");
       await postJson(`/api/replay/${replay.replaySlug}/report`, {
@@ -70,10 +83,13 @@ export function ReplayViewer({
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <Badge>Replay</Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge>Replay</Badge>
+                {replay.isDemo ? <Badge>Demo</Badge> : null}
+              </div>
               <CardTitle className="mt-3">Room {replay.roomCode}</CardTitle>
               <CardDescription className="mt-2">
-                Unlisted replay for a completed Relay match. Share the link with the people who were there for the chain drift.
+                Unlisted playback for a completed Relay match. Good for sharing the exact moment the room lost the plot.
               </CardDescription>
             </div>
             <Button variant="secondary" onClick={handlePin} disabled={loading === "pin"}>
@@ -83,22 +99,22 @@ export function ReplayViewer({
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="stack-panel px-4 py-4">
-              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                Chains
+              <p className="label-mono text-[color:var(--color-text-muted)]">Chains</p>
+              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
+                {replay.chains.length}
               </p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em]">{replay.chains.length}</p>
             </div>
             <div className="stack-panel px-4 py-4">
-              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                Skill
+              <p className="label-mono text-[color:var(--color-text-muted)]">Skill</p>
+              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
+                {replay.skillMode}
               </p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em]">{replay.skillMode}</p>
             </div>
             <div className="stack-panel px-4 py-4">
-              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                Room
+              <p className="label-mono text-[color:var(--color-text-muted)]">Room</p>
+              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
+                {replay.roomCode}
               </p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em]">{replay.roomCode}</p>
             </div>
           </div>
         </Card>
@@ -108,10 +124,14 @@ export function ReplayViewer({
             <div>
               <CardTitle>Report replay</CardTitle>
               <CardDescription className="mt-2">
-                Use this if the replay includes public-room abuse, harassment, or inappropriate content.
+                Use this for public-room abuse, harassment, or content that should not stay in circulation.
               </CardDescription>
             </div>
-            <Flag className="h-5 w-5 text-[color:var(--color-coral)]" />
+            {replay.isDemo ? (
+              <TestTube2 className="h-5 w-5 text-[color:var(--color-warning)]" />
+            ) : (
+              <Flag className="h-5 w-5 text-[color:var(--color-danger)]" />
+            )}
           </div>
           <Field>
             <FieldLabel>Reason</FieldLabel>
@@ -138,10 +158,10 @@ export function ReplayViewer({
             <div className="border-b border-[color:var(--color-border)] px-5 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                  <p className="label-mono text-[color:var(--color-text-muted)]">
                     Chain {chain.originSeatIndex + 1}
                   </p>
-                  <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-ink)]">
+                  <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
                     Started by {replay.members[chain.originMemberId]?.nickname ?? "Unknown"}
                   </p>
                 </div>
@@ -150,7 +170,7 @@ export function ReplayViewer({
             </div>
             <div className="grid gap-4 px-5 py-5">
               {chain.steps.map((step) => (
-                <div key={step.id} className="rounded-[24px] border border-[color:var(--color-border)] bg-white/72 px-4 py-4">
+                <div key={step.id} className="rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge>{getRoundLabel(step.roundIndex)}</Badge>
                     {step.language ? <Badge>{getLanguageLabel(step.language)}</Badge> : null}
@@ -160,12 +180,12 @@ export function ReplayViewer({
                     {step.stepType === "code" ? (
                       <ReadonlyCode value={step.text} language={step.language} height={240} />
                     ) : (
-                      <p className="text-base leading-8 text-[color:var(--color-ink-soft)] sm:text-lg">
+                      <p className="text-base leading-8 text-[color:var(--color-text)] sm:text-lg">
                         {step.text}
                       </p>
                     )}
                   </div>
-                  <div className="mt-4 text-sm font-medium text-[color:var(--color-muted)]">
+                  <div className="mt-4 text-sm font-medium text-[color:var(--color-text-muted)]">
                     Favorites: {replay.favoritesByStep[step.id] ?? 0}
                   </div>
                 </div>

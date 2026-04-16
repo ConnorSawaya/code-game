@@ -2,9 +2,9 @@
 
 import { useMemo, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { RadioTower, Users, UserRoundPlus } from "lucide-react";
+import { Eye, Users, UserRoundPlus } from "lucide-react";
 import type { PublicRoomSummary } from "@/features/game/types";
+import { useDemoMode } from "@/components/providers/demo-mode-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,8 @@ export function PublicRoomsBoard({
   rooms: PublicRoomSummary[];
 }) {
   const router = useRouter();
-  const { nickname, setNickname } = usePersistedNickname("");
+  const { demoMode } = useDemoMode();
+  const { nickname, setNickname } = usePersistedNickname("late-night-dev");
   const [skillMode, setSkillMode] = useState<"all" | PublicRoomSummary["skillMode"]>("all");
   const [turnstileToken, setTurnstileToken] = useState("");
   const [joiningCode, setJoiningCode] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export function PublicRoomsBoard({
         roomCode: code,
         nickname,
         turnstileToken,
+        demoMode,
       });
       startTransition(() => {
         router.push(`/room/${result.room_code}`);
@@ -58,13 +60,13 @@ export function PublicRoomsBoard({
 
   return (
     <div className="section-grid">
-      <section className="grid gap-5 xl:grid-cols-[0.88fr_1.12fr]">
+      <section className="grid gap-5 xl:grid-cols-[0.84fr_1.16fr]">
         <Card className="space-y-5">
-          <Badge>Public Lobbies</Badge>
+          <Badge>Public Rooms</Badge>
           <div>
-            <CardTitle>Find a room already buzzing.</CardTitle>
+            <CardTitle>Browse the rooms already making noise.</CardTitle>
             <CardDescription className="mt-2">
-              Browse live lobbies, spectate active rounds, or queue up for the next game without leaving the page.
+              Join an open lobby, watch a live match, or use demo mode to check the spectator and reveal states quickly.
             </CardDescription>
           </div>
           <Field>
@@ -72,7 +74,7 @@ export function PublicRoomsBoard({
             <Input value={nickname} onChange={(event) => setNickname(event.target.value)} />
           </Field>
           <Field>
-            <FieldLabel>Filter by skill</FieldLabel>
+            <FieldLabel>Skill filter</FieldLabel>
             <SegmentedControl
               value={skillMode}
               onChange={setSkillMode}
@@ -88,26 +90,20 @@ export function PublicRoomsBoard({
           <TurnstileWidget onToken={setTurnstileToken} />
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="stack-panel px-4 py-4">
-              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                Open rooms
-              </p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em]">
+              <p className="label-mono text-[color:var(--color-text-muted)]">Open rooms</p>
+              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
                 {filteredRooms.length}
               </p>
             </div>
             <div className="stack-panel px-4 py-4">
-              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                Active players
-              </p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em]">
+              <p className="label-mono text-[color:var(--color-text-muted)]">Active players</p>
+              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
                 {filteredRooms.reduce((total, room) => total + room.playerCount, 0)}
               </p>
             </div>
             <div className="stack-panel px-4 py-4">
-              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                Spectators
-              </p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em]">
+              <p className="label-mono text-[color:var(--color-text-muted)]">Spectators</p>
+              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
                 {filteredRooms.reduce((total, room) => total + room.spectatorCount, 0)}
               </p>
             </div>
@@ -117,84 +113,69 @@ export function PublicRoomsBoard({
         <Card className="space-y-4">
           {filteredRooms.length === 0 ? (
             <div className="stack-panel px-5 py-6">
-              <p className="font-display text-2xl tracking-[-0.05em]">
-                No open rooms match that filter yet.
+              <p className="font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
+                No rooms match that filter yet.
               </p>
-              <p className="mt-2 text-sm leading-7 text-[color:var(--color-muted)]">
-                Quick Play can spin up a new public room instantly if you want to kick things off.
+              <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">
+                Quick Play can spin up a new public lobby instantly if you want to kick one off.
               </p>
             </div>
           ) : null}
 
-          <div className="grid gap-4">
-            {filteredRooms.map((room, index) => (
-              <motion.div
-                key={room.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04 }}
-              >
-                <div className="stack-panel overflow-hidden">
-                  <div className="grid gap-4 px-5 py-5 lg:grid-cols-[1fr_auto] lg:items-center">
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge>{room.code}</Badge>
-                        <Badge>{getSkillModeConfig(room.skillMode).label}</Badge>
-                        <Badge>
-                          {room.status === "lobby"
-                            ? "Lobby"
-                            : room.status === "live"
-                              ? "Live"
-                              : "Reveal"}
-                        </Badge>
-                      </div>
-                      <div>
-                        <CardTitle>{room.hostNickname}&apos;s room</CardTitle>
-                        <CardDescription className="mt-2">
-                          {room.status === "lobby"
-                            ? "Open lobby with enough time to hop in before the first prompt lands."
-                            : room.status === "live"
-                              ? "Game already rolling. You can watch now and queue for the next one."
-                              : "Reveal stage is happening right now, which means the funny part has started."}
-                        </CardDescription>
-                      </div>
-                      <div className="flex flex-wrap gap-3 text-sm text-[color:var(--color-muted)]">
-                        <span className="surface-pill inline-flex items-center gap-2 rounded-full px-3 py-2">
-                          <Users className="h-4 w-4 text-[color:var(--color-cobalt)]" />
-                          {room.playerCount} players
-                        </span>
-                        <span className="surface-pill inline-flex items-center gap-2 rounded-full px-3 py-2">
-                          <RadioTower className="h-4 w-4 text-[color:var(--color-coral)]" />
-                          {room.spectatorCount} spectators
-                        </span>
-                        <span className="surface-pill inline-flex items-center gap-2 rounded-full px-3 py-2">
-                          <UserRoundPlus className="h-4 w-4 text-[color:var(--color-teal)]" />
-                          {room.seatsOpen} seats open
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 lg:min-w-[180px]">
-                      <Button
-                        fullWidth
-                        size="lg"
-                        onClick={() => joinPublicRoom(room.code)}
-                        disabled={joiningCode === room.code}
-                      >
-                        {joiningCode === room.code
-                          ? "Joining..."
-                          : room.status === "lobby"
-                            ? "Join room"
-                            : "Watch room"}
-                      </Button>
-                      <p className="text-center text-xs uppercase tracking-[0.14em] text-[color:var(--color-muted)]">
-                        {room.status === "lobby" ? "Ready to enter" : "Spectate and queue"}
-                      </p>
-                    </div>
+          {filteredRooms.map((room) => (
+            <div key={room.id} className="stack-panel overflow-hidden">
+              <div className="grid gap-4 px-5 py-5 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge>{room.code}</Badge>
+                    <Badge>{getSkillModeConfig(room.skillMode).label}</Badge>
+                    <Badge>{room.status}</Badge>
+                  </div>
+                  <div>
+                    <CardTitle>{room.hostNickname}&apos;s room</CardTitle>
+                    <CardDescription className="mt-2">
+                      {room.status === "lobby"
+                        ? "Open lobby with enough breathing room to hop in before prompt one."
+                        : room.status === "live"
+                          ? "Game is already moving. Spectate now, then queue for the next one."
+                          : "Reveal is underway. Good timing if you only want the funniest part."}
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-sm text-[color:var(--color-text-soft)]">
+                    <span className="surface-pill inline-flex items-center gap-2 rounded-full px-3 py-2">
+                      <Users className="h-4 w-4 text-[color:var(--color-accent-hover)]" />
+                      {room.playerCount} players
+                    </span>
+                    <span className="surface-pill inline-flex items-center gap-2 rounded-full px-3 py-2">
+                      <Eye className="h-4 w-4 text-[color:var(--color-warning)]" />
+                      {room.spectatorCount} spectators
+                    </span>
+                    <span className="surface-pill inline-flex items-center gap-2 rounded-full px-3 py-2">
+                      <UserRoundPlus className="h-4 w-4 text-[color:var(--color-success)]" />
+                      {room.seatsOpen} seats open
+                    </span>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+                <div className="flex flex-col gap-2 lg:min-w-[180px]">
+                  <Button
+                    fullWidth
+                    size="lg"
+                    onClick={() => void joinPublicRoom(room.code)}
+                    disabled={joiningCode === room.code}
+                  >
+                    {joiningCode === room.code
+                      ? "Opening..."
+                      : room.status === "lobby"
+                        ? "Join room"
+                        : "Watch room"}
+                  </Button>
+                  <p className="text-center font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                    {room.status === "lobby" ? "ready to enter" : "spectate and queue"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </Card>
       </section>
     </div>

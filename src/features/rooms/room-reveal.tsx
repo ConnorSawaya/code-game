@@ -32,10 +32,13 @@ export function RoomReveal({
       <Card className="space-y-5 overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Badge>Reveal Stage</Badge>
-            <CardTitle className="mt-3">Watch the whole chain collapse in real time.</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>Reveal stage</Badge>
+              {snapshot.isDemo ? <Badge>Demo replay</Badge> : null}
+            </div>
+            <CardTitle className="mt-3">Watch the whole chain collapse in public.</CardTitle>
             <CardDescription className="mt-2">
-              React to each jump, vote for the funniest break in the chain, and open the replay when the crowd favorite lands.
+              React to every jump, vote for the best break in the chain, and open the replay once the room picks favorites.
             </CardDescription>
           </div>
           {snapshot.game?.replaySlug ? (
@@ -57,10 +60,10 @@ export function RoomReveal({
               <div className="border-b border-[color:var(--color-border)] px-5 py-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
+                    <p className="label-mono text-[color:var(--color-text-muted)]">
                       Chain {chain.originSeatIndex + 1}
                     </p>
-                    <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-ink)]">
+                    <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
                       Started by{" "}
                       {snapshot.members.find((member) => member.id === chain.originMemberId)?.nickname ??
                         "Unknown"}
@@ -71,7 +74,7 @@ export function RoomReveal({
               </div>
               <div className="grid gap-4 px-5 py-5">
                 {chain.steps.map((step) => (
-                  <div key={step.id} className="rounded-[24px] border border-[color:var(--color-border)] bg-white/72 px-4 py-4">
+                  <div key={step.id} className="rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge>{getRoundLabel(step.roundIndex)}</Badge>
                       {step.language ? <Badge>{getLanguageLabel(step.language)}</Badge> : null}
@@ -81,7 +84,7 @@ export function RoomReveal({
                       {step.stepType === "code" ? (
                         <ReadonlyCode value={step.text} language={step.language} height={240} />
                       ) : (
-                        <p className="text-base leading-8 text-[color:var(--color-ink-soft)] sm:text-lg">
+                        <p className="text-base leading-8 text-[color:var(--color-text)] sm:text-lg">
                           {step.text}
                         </p>
                       )}
@@ -92,7 +95,7 @@ export function RoomReveal({
                           <button
                             key={emoji}
                             type="button"
-                            className="surface-pill inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5"
+                            className="inline-flex items-center gap-2 rounded-[999px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] px-3 py-2 text-sm font-semibold transition hover:border-[color:var(--color-border-strong)] hover:text-[color:var(--color-text-strong)]"
                             onClick={() => onReact(step.id, emoji)}
                           >
                             <span>{emoji}</span>

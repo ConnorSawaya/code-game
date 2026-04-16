@@ -6,6 +6,16 @@ import type {
   RoomSnapshot,
   RoomVisibility,
 } from "@/features/game/types";
+import {
+  buildDemoPublicRoomSummaries,
+  buildDemoRoomViewData,
+  getDemoScenarioByCode,
+} from "@/features/demo/mock-data";
+import {
+  getServerNicknameFallback,
+  hasSupabaseServerEnv,
+  isDemoModeEnabled,
+} from "@/features/demo/server";
 import { createSupabaseServerClient } from "@/features/supabase/server";
 import { getSupabaseAdminClient } from "@/features/supabase/admin";
 import { ensureReplaySnapshotStored } from "@/features/replays/snapshot";
@@ -102,6 +112,21 @@ function mapSettings(room: RoomRecord): RoomSnapshot["settings"] {
 }
 
 export async function getRoomVisibilityByCode(roomCode: string) {
+  if (await isDemoModeEnabled()) {
+    const scenario = getDemoScenarioByCode(roomCode);
+
+    if (scenario) {
+      return {
+        visibility: scenario.visibility,
+        status: scenario.status,
+      };
+    }
+  }
+
+  if (!hasSupabaseServerEnv()) {
+    return null;
+  }
+
   const supabase = getSupabaseAdminClient();
   const { data } = await supabase
     .from("rooms")
@@ -113,6 +138,12 @@ export async function getRoomVisibilityByCode(roomCode: string) {
 }
 
 export async function getPublicRoomSummaries() {
+  const demoMode = await isDemoModeEnabled();
+
+  if (!hasSupabaseServerEnv()) {
+    return demoMode ? buildDemoPublicRoomSummaries() : [];
+  }
+
   const supabase = getSupabaseAdminClient();
   const { data: roomResults } = await supabase
     .from("public_room_summaries")
@@ -132,7 +163,7 @@ export async function getPublicRoomSummaries() {
     last_activity_at: string;
   }>;
 
-  return data.map(
+  const realRooms = data.map(
     (room) =>
       ({
         id: room.id,
@@ -148,9 +179,28 @@ export async function getPublicRoomSummaries() {
         lastActivityAt: room.last_activity_at,
       }) satisfies PublicRoomSummary,
   );
+
+  return demoMode ? [...buildDemoPublicRoomSummaries(), ...realRooms] : realRooms;
 }
 
 export async function getRoomViewData(roomCode: string): Promise<RoomViewData> {
+  if (await isDemoModeEnabled()) {
+    const nickname = await getServerNicknameFallback();
+    const demoData = buildDemoRoomViewData(roomCode, nickname);
+
+    if (demoData) {
+      return demoData;
+    }
+  }
+
+  if (!hasSupabaseServerEnv()) {
+    return {
+      snapshot: null,
+      reactionsByStep: {},
+      favoritesByStep: {},
+    };
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

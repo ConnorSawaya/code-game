@@ -1,3 +1,5 @@
+import { isDemoModeEnabled } from "@/features/demo/server";
+import { isDemoRoomCode } from "@/features/demo/shared";
 import { jsonError, jsonOk } from "@/lib/http";
 import { RouteError, getErrorDetails, requireUser } from "@/features/api/route-utils";
 import { enforceRateLimit, getClientIp } from "@/features/moderation/rate-limit";
@@ -7,8 +9,15 @@ import { joinRoom, joinRoomSchema } from "@/features/rooms/service";
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser();
     const body = joinRoomSchema.parse(await request.json());
+
+    if (body.demoMode && (await isDemoModeEnabled()) && isDemoRoomCode(body.roomCode)) {
+      return jsonOk({
+        room_code: body.roomCode.toUpperCase(),
+      });
+    }
+
+    const user = await requireUser();
     const ip = getClientIp(request.headers);
     const allowed = await enforceRateLimit({
       action: "join-room",

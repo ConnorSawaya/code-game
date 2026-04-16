@@ -1,5 +1,6 @@
 import "server-only";
 
+import { hasSupabasePublicEnv } from "@/features/demo/server";
 import { createSupabaseServerClient } from "@/features/supabase/server";
 
 export interface ViewerSummary {
@@ -10,6 +11,10 @@ export interface ViewerSummary {
 }
 
 export async function getViewer() {
+  if (!hasSupabasePublicEnv()) {
+    return null;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

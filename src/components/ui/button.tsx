@@ -5,23 +5,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-[18px] border px-4 py-2.5 text-sm font-semibold transition duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-cobalt)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-background)] disabled:pointer-events-none disabled:opacity-55",
+  "inline-flex items-center justify-center gap-2 rounded-[12px] border px-4 py-2.5 text-sm font-semibold transition duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent-hover)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-bg-main)] disabled:pointer-events-none disabled:opacity-55",
   {
     variants: {
       variant: {
         primary:
-          "border-[rgba(255,255,255,0.08)] bg-[linear-gradient(180deg,var(--color-cobalt),var(--color-cobalt-strong))] text-white shadow-[var(--shadow-lift)] hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0.5 active:shadow-[var(--shadow-press)]",
+          "border-[rgba(0,122,204,0.65)] bg-[linear-gradient(180deg,var(--color-accent),#0661a6)] text-white hover:border-[color:var(--color-accent-hover)] hover:bg-[linear-gradient(180deg,var(--color-accent-hover),var(--color-accent))] active:translate-y-px",
         secondary:
-          "border-[color:var(--color-border-strong)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,241,228,0.98))] text-[color:var(--color-ink)] shadow-[var(--shadow-press)] hover:-translate-y-0.5 hover:border-[color:var(--color-cobalt)] hover:text-[color:var(--color-cobalt)] active:translate-y-0.5",
+          "border-[color:var(--color-border)] bg-[color:var(--color-bg-elevated)] text-[color:var(--color-text-strong)] hover:border-[color:var(--color-border-strong)] hover:bg-[color:var(--color-bg-panel)] active:translate-y-px",
         accent:
-          "border-[rgba(255,255,255,0.08)] bg-[linear-gradient(180deg,var(--color-coral),var(--color-coral-strong))] text-white shadow-[0_18px_34px_rgba(239,109,75,0.28)] hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0.5",
+          "border-[rgba(46,160,67,0.45)] bg-[linear-gradient(180deg,var(--color-success),#247d34)] text-white hover:brightness-105 active:translate-y-px",
         ghost:
-          "border-transparent bg-[rgba(255,255,255,0.42)] text-[color:var(--color-ink-soft)] hover:bg-white/72 hover:text-[color:var(--color-ink)]",
+          "border-transparent bg-transparent text-[color:var(--color-text-soft)] hover:border-[color:var(--color-border)] hover:bg-[color:var(--color-bg-elevated)] hover:text-[color:var(--color-text-strong)]",
       },
       size: {
-        sm: "h-10 px-3.5 text-sm",
-        md: "h-12 px-5 text-sm",
-        lg: "h-14 px-6 text-base",
+        sm: "h-9 px-3 text-[0.82rem]",
+        md: "h-11 px-4.5 text-sm",
+        lg: "h-12 px-5 text-sm",
       },
       fullWidth: {
         true: "w-full",

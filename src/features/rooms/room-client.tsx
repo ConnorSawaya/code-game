@@ -9,11 +9,25 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { differenceInSeconds } from "date-fns";
+import { TestTube2, SkipForward, RotateCcw } from "lucide-react";
 import type { PromptRecord } from "@/features/game/types";
 import { deriveViewerTask } from "@/features/game/logic";
+import {
+  favoriteDemoStep,
+  forceAdvanceDemoRoom,
+  getDemoStorageKey,
+  reactToDemoStep,
+  resetDemoRoom,
+  saveDemoSettings,
+  startDemoRoom,
+  submitDemoTurn,
+  toggleDemoQueue,
+  toggleDemoReady,
+} from "@/features/demo/room-state";
 import type { RoomViewData } from "@/features/rooms/queries";
 import { getSupabaseBrowserClient } from "@/features/supabase/browser";
 import { postJson } from "@/lib/client-api";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { RoomActivePhase } from "@/features/rooms/room-active-phase";
@@ -53,6 +67,7 @@ export function RoomClient({
   const [now, setNow] = useState(Date.now());
 
   const snapshot = data.snapshot;
+  const isDemoRoom = Boolean(snapshot?.isDemo);
   const task = snapshot ? deriveViewerTask(snapshot) : null;
   const draftKey = getDraftKey(snapshot ?? null, task?.chainId ?? null);
 
@@ -63,8 +78,29 @@ export function RoomClient({
   }, [router]);
 
   useEffect(() => {
+    if (initialData.snapshot?.isDemo && initialData.snapshot.code) {
+      try {
+        const storedState = window.localStorage.getItem(
+          getDemoStorageKey(initialData.snapshot.code),
+        );
+
+        if (storedState) {
+          setData(JSON.parse(storedState) as RoomViewData);
+          return;
+        }
+      } catch {
+        window.localStorage.removeItem(getDemoStorageKey(initialData.snapshot.code));
+      }
+    }
+
     setData(initialData);
   }, [initialData]);
+
+  useEffect(() => {
+    if (snapshot?.isDemo && snapshot.code) {
+      window.localStorage.setItem(getDemoStorageKey(snapshot.code), JSON.stringify(data));
+    }
+  }, [data, snapshot?.code, snapshot?.isDemo]);
 
   useEffect(() => {
     setSettingsDraft(snapshot?.settings ?? null);
@@ -95,7 +131,7 @@ export function RoomClient({
   }, []);
 
   useEffect(() => {
-    if (!snapshot?.id) {
+    if (!snapshot?.id || snapshot.isDemo) {
       return;
     }
 
@@ -121,10 +157,10 @@ export function RoomClient({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [refreshRoom, snapshot?.code, snapshot?.currentUserMemberId, snapshot?.id]);
+  }, [refreshRoom, snapshot?.code, snapshot?.currentUserMemberId, snapshot?.id, snapshot?.isDemo]);
 
   useEffect(() => {
-    if (!snapshot?.code) {
+    if (!snapshot?.code || snapshot.isDemo) {
       return;
     }
 
@@ -142,7 +178,7 @@ export function RoomClient({
     }, 15000);
 
     return () => window.clearInterval(interval);
-  }, [snapshot?.code]);
+  }, [snapshot?.code, snapshot?.isDemo]);
 
   const timeRemaining = useMemo(() => {
     if (!snapshot?.game?.phaseEndsAt) {
@@ -156,12 +192,27 @@ export function RoomClient({
     try {
       setSubmitting(label);
       await action();
-      refreshRoom();
+      if (!isDemoRoom) {
+        refreshRoom();
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong.");
     } finally {
       setSubmitting(null);
     }
+  };
+
+  const handleDemoMutation = (
+    label: string,
+    updater: (current: RoomViewData) => RoomViewData,
+    successMessage?: string,
+  ) => {
+    setSubmitting(label);
+    setData((current) => updater(current));
+    if (successMessage) {
+      toast.success(successMessage);
+    }
+    setSubmitting(null);
   };
 
   const handleCopyCode = async () => {
@@ -209,31 +260,84 @@ export function RoomClient({
           snapshot={snapshot}
           submitting={submitting}
           onToggleReady={() =>
-            void handleApi("ready", async () => {
-              await postJson(`/api/room/${snapshot.code}/ready`, {});
-            })
+            isDemoRoom
+              ? handleDemoMutation("ready", toggleDemoReady)
+              : void handleApi("ready", async () => {
+                  await postJson(`/api/room/${snapshot.code}/ready`, {});
+                })
           }
           onStart={() =>
-            void handleApi("start", async () => {
-              await postJson(`/api/room/${snapshot.code}/start`);
-            })
+            isDemoRoom
+              ? handleDemoMutation(
+                  "start",
+                  (current) => startDemoRoom(current),
+                  snapshot.status === "reveal" ? "Demo room reset." : "Demo game launched.",
+                )
+              : void handleApi("start", async () => {
+                  await postJson(`/api/room/${snapshot.code}/start`);
+                })
           }
           onQueueNextGame={() =>
-            void handleApi("queue", async () => {
-              await postJson(`/api/room/${snapshot.code}/queue`, {});
-            })
+            isDemoRoom
+              ? handleDemoMutation("queue", toggleDemoQueue)
+              : void handleApi("queue", async () => {
+                  await postJson(`/api/room/${snapshot.code}/queue`, {});
+                })
           }
           onModerate={(memberId, ban) =>
-            void handleApi("moderate", async () => {
-              await postJson(`/api/room/${snapshot.code}/moderate`, {
-                memberId,
-                ban,
-                reason: ban ? "Banned by host" : "Removed by host",
-              });
-            })
+            isDemoRoom
+              ? toast.success(ban ? "Demo ban recorded." : "Demo kick recorded.")
+              : void handleApi("moderate", async () => {
+                  await postJson(`/api/room/${snapshot.code}/moderate`, {
+                    memberId,
+                    ban,
+                    reason: ban ? "Banned by host" : "Removed by host",
+                  });
+                })
           }
         />
       </section>
+
+      {isDemoRoom ? (
+        <Card className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Badge>Demo / Testing Controls</Badge>
+                <Badge>Temporary</Badge>
+              </div>
+              <CardTitle className="mt-3">Mock the awkward cases without waiting on backend work.</CardTitle>
+              <CardDescription className="mt-2">
+                These controls only exist in demo mode. Use them to move phases, reset the room,
+                and verify reveal or spectator states quickly.
+              </CardDescription>
+            </div>
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] text-[color:var(--color-warning)]">
+              <TestTube2 className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="secondary"
+              onClick={() =>
+                handleDemoMutation("advance-demo", forceAdvanceDemoRoom, "Demo room advanced.")
+              }
+            >
+              <SkipForward className="h-4 w-4" />
+              Advance phase
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() =>
+                handleDemoMutation("reset-demo", resetDemoRoom, "Demo room reset.")
+              }
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reset room
+            </Button>
+          </div>
+        </Card>
+      ) : null}
 
       {snapshot.status === "lobby" && settingsDraft ? (
         <RoomLobby
@@ -241,9 +345,15 @@ export function RoomClient({
           settingsDraft={settingsDraft}
           setSettingsDraft={setSettingsDraft}
           onSaveSettings={() =>
-            void handleApi("settings", async () => {
-              await postJson(`/api/room/${snapshot.code}/settings`, settingsDraft);
-            })
+            isDemoRoom
+              ? handleDemoMutation(
+                  "settings",
+                  (current) => saveDemoSettings(current, settingsDraft),
+                  "Demo settings saved.",
+                )
+              : void handleApi("settings", async () => {
+                  await postJson(`/api/room/${snapshot.code}/settings`, settingsDraft);
+                })
           }
           submitting={submitting}
         />
@@ -271,30 +381,55 @@ export function RoomClient({
             setDraft(randomPrompt.text);
           }}
           onSubmit={() =>
-            void handleApi("submit", async () => {
-              if (!snapshot || !task) {
-                return;
-              }
+            isDemoRoom
+              ? handleDemoMutation("submit", (current) => {
+                  if (!snapshot || !task) {
+                    return current;
+                  }
 
-              const text =
-                task.expectedStepType === "prompt" && selectedPromptId
-                  ? promptLibrary.find((prompt) => prompt.id === selectedPromptId)?.text ?? draft
-                  : draft;
+                  const text =
+                    task.expectedStepType === "prompt" && selectedPromptId
+                      ? promptLibrary.find((prompt) => prompt.id === selectedPromptId)?.text ?? draft
+                      : draft;
 
-              await postJson(`/api/room/${snapshot.code}/submit`, {
-                text,
-                promptRecordId: selectedPromptId,
-                promptSourceType:
-                  task.expectedStepType === "prompt" && selectedPromptId
-                    ? "library"
-                    : "custom",
-              });
+                  if (draftKey) {
+                    window.localStorage.removeItem(draftKey);
+                  }
+                  setDraft("");
 
-              if (draftKey) {
-                window.localStorage.removeItem(draftKey);
-              }
-              setDraft("");
-            })
+                  return submitDemoTurn(
+                    current,
+                    text,
+                    selectedPromptId,
+                    task.expectedStepType === "prompt" && selectedPromptId
+                      ? "library"
+                      : "custom",
+                  );
+                })
+              : void handleApi("submit", async () => {
+                  if (!snapshot || !task) {
+                    return;
+                  }
+
+                  const text =
+                    task.expectedStepType === "prompt" && selectedPromptId
+                      ? promptLibrary.find((prompt) => prompt.id === selectedPromptId)?.text ?? draft
+                      : draft;
+
+                  await postJson(`/api/room/${snapshot.code}/submit`, {
+                    text,
+                    promptRecordId: selectedPromptId,
+                    promptSourceType:
+                      task.expectedStepType === "prompt" && selectedPromptId
+                        ? "library"
+                        : "custom",
+                  });
+
+                  if (draftKey) {
+                    window.localStorage.removeItem(draftKey);
+                  }
+                  setDraft("");
+                })
           }
           submitting={submitting}
         />
@@ -306,14 +441,18 @@ export function RoomClient({
           reactionsByStep={data.reactionsByStep}
           favoritesByStep={data.favoritesByStep}
           onReact={(stepId, emoji) =>
-            void handleApi("react", async () => {
-              await postJson(`/api/room/${snapshot.code}/react`, { stepId, emoji });
-            })
+            isDemoRoom
+              ? handleDemoMutation("react", (current) => reactToDemoStep(current, stepId, emoji))
+              : void handleApi("react", async () => {
+                  await postJson(`/api/room/${snapshot.code}/react`, { stepId, emoji });
+                })
           }
           onFavorite={(chainId, stepId) =>
-            void handleApi("favorite", async () => {
-              await postJson(`/api/room/${snapshot.code}/favorite`, { chainId, stepId });
-            })
+            isDemoRoom
+              ? handleDemoMutation("favorite", (current) => favoriteDemoStep(current, stepId))
+              : void handleApi("favorite", async () => {
+                  await postJson(`/api/room/${snapshot.code}/favorite`, { chainId, stepId });
+                })
           }
           onOpenReplay={() => router.push(`/replay/${snapshot.game?.replaySlug}`)}
         />
@@ -326,15 +465,17 @@ export function RoomClient({
         setReportDetails={setReportDetails}
         onTurnstileToken={setTurnstileToken}
         onReport={() =>
-          void handleApi("report", async () => {
-            await postJson(`/api/room/${snapshot.code}/report`, {
-              reason: reportReason,
-              details: reportDetails,
-              turnstileToken,
-            });
-            setReportReason("");
-            setReportDetails("");
-          })
+          isDemoRoom
+            ? handleDemoMutation("report", (current) => current, "Demo report recorded.")
+            : void handleApi("report", async () => {
+                await postJson(`/api/room/${snapshot.code}/report`, {
+                  reason: reportReason,
+                  details: reportDetails,
+                  turnstileToken,
+                });
+                setReportReason("");
+                setReportDetails("");
+              })
         }
         onRefresh={refreshRoom}
         submitting={submitting}

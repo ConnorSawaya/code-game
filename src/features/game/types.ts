@@ -143,6 +143,7 @@ export interface RoomSnapshot {
   code: string;
   roomName: string;
   status: "lobby" | "live" | "reveal";
+  isDemo?: boolean;
   isHost: boolean;
   viewerRole: "host" | "player" | "spectator" | null;
   currentUserMemberId: string | null;

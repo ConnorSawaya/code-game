@@ -11,7 +11,7 @@ export function Textarea({
     <TextareaAutosize
       minRows={minRows}
       className={cn(
-        "w-full rounded-[22px] border border-[color:var(--color-border-strong)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,241,228,0.96))] px-4 py-3 text-sm leading-7 text-[color:var(--color-ink)] shadow-[var(--shadow-press)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-cobalt)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-background)] placeholder:text-[color:var(--color-muted)]/70",
+        "w-full rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-3.5 py-3 text-sm leading-7 text-[color:var(--color-text-strong)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent-hover)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-bg-main)] placeholder:text-[color:var(--color-text-muted)]",
         className,
       )}
       {...props}

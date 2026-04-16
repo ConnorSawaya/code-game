@@ -1,242 +1,402 @@
-import type { Route } from "next";
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
-  Code2,
-  Dice5,
-  LockKeyhole,
-  Radio,
-  UsersRound,
+  Eye,
+  Gamepad2,
+  MessagesSquare,
+  PlayCircle,
+  Shield,
+  TerminalSquare,
+  TimerReset,
+  Users,
   WandSparkles,
 } from "lucide-react";
+import { EditorShell } from "@/components/editor/editor-shell";
+import { useDemoMode } from "@/components/providers/demo-mode-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 
-const quickActions: {
-  href: Route;
-  title: string;
-  description: string;
-  icon: typeof LockKeyhole;
-}[] = [
+const steps = [
   {
-    href: "/play",
-    title: "Create Room",
-    description: "Spin up a private room, tweak the mode, and get everyone in with one code.",
-    icon: LockKeyhole,
+    title: "Join a room",
+    body: "Grab a nickname, drop into the lobby, and pick a room vibe that matches the night.",
   },
   {
-    href: "/play",
-    title: "Join by Code",
-    description: "Hop straight into a friend's room or reconnect to your old seat fast.",
-    icon: UsersRound,
+    title: "Build your turn",
+    body: "Write code or decode what the last dev meant. Fast rounds keep the energy high.",
   },
   {
-    href: "/rooms/public",
-    title: "Public Rooms",
-    description: "Browse open lobbies, spectate live chaos, and queue for the next game.",
-    icon: Radio,
+    title: "Pass it on",
+    body: "Each player only sees the previous step, so the original idea starts drifting immediately.",
   },
   {
-    href: "/play",
-    title: "Quick Play",
-    description: "Match into the oldest compatible public room and start causing chain drift.",
-    icon: Dice5,
+    title: "Reveal the mess",
+    body: "Playback the full chain, react to the breaks, and save the funniest moments for later.",
   },
 ];
 
-const highlights = [
+const features = [
   {
-    title: "Prompt -> Code -> Description",
-    description: "Every step only sees the previous one, so ideas mutate in funny, surprising directions.",
-    icon: Code2,
+    icon: Users,
+    title: "Live rooms",
+    body: "Private codes, public lobbies, reconnect protection, spectators, and next-game queueing.",
   },
   {
-    title: "Built for groups",
-    description: "Private room codes, public lobbies, guest identities, reconnects, and replay sharing are all baked in.",
-    icon: UsersRound,
+    icon: TerminalSquare,
+    title: "Real editor",
+    body: "A VS Code-like workspace with Monaco, language-aware syntax, limits, and dark replay viewing.",
   },
   {
-    title: "Reveal-night payoff",
-    description: "Animated chain reveals, reactions, favorites, and replay links make the ending feel like the main event.",
-    icon: WandSparkles,
+    icon: MessagesSquare,
+    title: "Nicknames over accounts",
+    body: "Guests get in instantly. Upgrade later without losing replay history or room ownership.",
+  },
+  {
+    icon: Shield,
+    title: "Filters and moderation",
+    body: "Profanity checks, reports, kick and ban controls, Turnstile, and sensible public-room guardrails.",
+  },
+  {
+    icon: Eye,
+    title: "Reveal playback",
+    body: "Animated chain reveals, reaction counters, favorite moments, and unlisted replay links.",
+  },
+  {
+    icon: PlayCircle,
+    title: "Demo mode",
+    body: "Temporary password unlock for mock rooms, fake data, and admin testing controls while backend pieces evolve.",
   },
 ];
+
+const useCases = [
+  "Hack nights",
+  "Game jams",
+  "CS classes",
+  "Friend groups",
+  "Workshop icebreakers",
+  "Late-night refactors",
+];
+
+const demoRooms = ["boss-fight-jam", "shader-chaos", "late-night-refactor", "cursed-platformer"];
+
+function HeroWorkbench() {
+  return (
+    <EditorShell
+      title="relay/demo-room"
+      tabLabel="enemySpawner.ts"
+      treeItems={[
+        { label: "relay-room", depth: 0 },
+        { label: "src", depth: 1 },
+        { label: "enemySpawner.ts", depth: 2, active: true },
+        { label: "playerController.js", depth: 2 },
+        { label: "README.md", depth: 1 },
+      ]}
+      footer={
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="font-mono text-[0.72rem] uppercase tracking-[0.14em] text-[#8b949e]">
+            Room BOSS1
+          </span>
+          <span className="font-mono text-[0.72rem] uppercase tracking-[0.14em] text-[#8b949e]">
+            Code / Description / Code
+          </span>
+        </div>
+      }
+      statusLeft={
+        <>
+          <span>main</span>
+          <span>TypeScript</span>
+          <span>Round 2 / 4</span>
+        </>
+      }
+      statusRight={
+        <>
+          <span>4 players</span>
+          <span>relay live</span>
+        </>
+      }
+    >
+      <div className="grid gap-4 bg-[#1e1e1e] p-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="rounded-[10px] border border-[#2d2d30] bg-[#1e1e1e]">
+          <div className="grid grid-cols-[40px_minmax(0,1fr)] font-mono text-[13px] leading-7">
+            {[
+              "const mood = rage > 0.7 ? 'overdrive' : 'hold';",
+              "hud.flash(mood);",
+              "spawnWave(mood === 'overdrive' ? 3 : 1);",
+              "",
+              "if (playerIsCamping) {",
+              "  boss.taunt('move or perish');",
+              "}",
+            ].map((line, index) => (
+              <div key={index} className="contents">
+                <div className="border-r border-[#2d2d30] pr-3 text-right text-[#6e7681]">
+                  {index + 1}
+                </div>
+                <div className="overflow-x-auto pl-4 text-[#d4d4d4]">{line || " "}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-3">
+            <div className="rounded-[10px] border border-[#2d2d30] bg-[#181818] p-3">
+              <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[#8b949e]">
+                Current chain
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[#e6edf3]">
+                &quot;Build a boss fight that gets offended when the player stands still.&quot;
+              </p>
+            </div>
+            <div className="rounded-[10px] border border-[#2d2d30] bg-[#181818] p-3">
+              <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[#8b949e]">
+                Next player sees
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[#c9d1d9]">
+                &quot;It escalates the encounter and taunts anyone who stops moving.&quot;
+              </p>
+            </div>
+        </div>
+      </div>
+    </EditorShell>
+  );
+}
 
 export default function HomePage() {
+  const { demoMode, openDialog } = useDemoMode();
+
   return (
-    <div className="section-grid">
-      <section className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
-        <Card className="overflow-hidden p-0">
-          <div className="relative overflow-hidden px-5 py-6 sm:px-7 sm:py-7">
-            <div className="hero-orb left-[-2rem] top-[-1rem] h-24 w-24 bg-[rgba(239,109,75,0.28)]" />
-            <div className="hero-orb right-[-1rem] top-4 h-28 w-28 bg-[rgba(53,90,216,0.22)]" />
-            <div className="relative grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-              <div className="space-y-5">
-                <Badge>Multiplayer Code-Chain Party Game</Badge>
-                <div className="space-y-3">
-                  <h1 className="max-w-3xl text-balance font-display text-4xl font-semibold tracking-[-0.07em] text-[color:var(--color-ink)] sm:text-[4.3rem] sm:leading-[0.95]">
-                    Pass the idea. Break the meaning. Reveal the disaster.
-                  </h1>
-                  <p className="max-w-2xl text-base leading-8 text-[color:var(--color-muted)] sm:text-lg">
-                    Relay turns prompts into a chain reaction of code and descriptions. Friends only see one step at a time, then everyone watches the full mutation unfold at the end.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Link href="/play">
-                    <Button size="lg">
-                      Play now
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link href="/play">
-                    <Button variant="secondary" size="lg">
-                      Create room
-                    </Button>
-                  </Link>
-                  <Link href="/rooms/public">
-                    <Button variant="ghost" size="lg">
-                      Public rooms
-                    </Button>
-                  </Link>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="stack-panel px-4 py-4">
-                    <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                      Players
-                    </p>
-                    <p className="mt-2 font-display text-3xl tracking-[-0.06em]">3-12</p>
-                  </div>
-                  <div className="stack-panel px-4 py-4">
-                    <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                      Languages
-                    </p>
-                    <p className="mt-2 font-display text-3xl tracking-[-0.06em]">4</p>
-                  </div>
-                  <div className="stack-panel px-4 py-4">
-                    <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                      Prompt pack ideas
-                    </p>
-                    <p className="mt-2 font-display text-3xl tracking-[-0.06em]">600</p>
-                  </div>
-                </div>
+    <div className="section-grid pb-8">
+      <section className="hero-grid relative overflow-hidden rounded-[22px] border border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(13,17,23,0.98),rgba(11,16,21,0.98))] p-6 shadow-[var(--shadow-panel)] sm:p-8">
+        <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent)]" />
+        <div className="grid gap-8 xl:grid-cols-[0.95fr_1.05fr] xl:items-center">
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>Multiplayer code telephone</Badge>
+              <Badge>Built for hack nights</Badge>
+              {demoMode ? <Badge>Demo mode unlocked</Badge> : null}
+            </div>
+            <div className="space-y-4">
+              <h1 className="max-w-[11ch] text-balance font-display text-5xl font-semibold tracking-[-0.07em] text-[color:var(--color-text-strong)] sm:text-6xl sm:leading-[0.95]">
+                Pass the code. Ship the chaos.
+              </h1>
+              <p className="max-w-2xl text-lg leading-8 text-[color:var(--color-text-soft)]">
+                Relay is the party game where each dev mutates the last step. Join a room,
+                write code or describe what you think it does, then watch the final build go
+                gloriously off the rails.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button size="lg" onClick={openDialog}>
+                Try Demo
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Link href="#how-it-works">
+                <Button variant="secondary" size="lg">
+                  See How It Works
+                </Button>
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="stack-panel px-4 py-4">
+                <p className="label-mono text-[color:var(--color-text-muted)]">Players</p>
+                <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
+                  3-12
+                </p>
               </div>
-
-              <div className="grid gap-3 self-start">
-                <div className="panel-ink rounded-[30px] p-4 text-[#dfe7f7]">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                    <div>
-                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#8fa1c5]">
-                        Live Chain
-                      </p>
-                      <p className="mt-1 font-display text-2xl tracking-[-0.05em] text-white">
-                        What started as a weather app...
-                      </p>
-                    </div>
-                    <Badge className="border-white/10 bg-white/8 text-[#dce5f7] shadow-none">
-                      Reveal ready
-                    </Badge>
-                  </div>
-                  <div className="mt-4 grid gap-3">
-                    <div className="rounded-[22px] border border-white/8 bg-white/5 px-4 py-4">
-                      <p className="text-[0.68rem] uppercase tracking-[0.16em] text-[#8fa1c5]">
-                        Prompt
-                      </p>
-                      <p className="mt-2 text-base leading-7 text-[#eef3ff]">
-                        &quot;Build a weather widget that overreacts to tiny temperature changes.&quot;
-                      </p>
-                    </div>
-                    <div className="rounded-[22px] border border-white/8 bg-[#0a1020] px-0 py-0">
-                      <div className="flex items-center justify-between border-b border-white/8 px-4 py-3 text-sm text-[#8fa1c5]">
-                        <span>relay-step.js</span>
-                        <span>JavaScript</span>
-                      </div>
-                      <pre className="overflow-auto px-4 py-4 font-mono text-sm leading-7 text-[#dfe7f7]">{`const mood = temp < 62 ? "panic" : "relax";
-banner.textContent = \`Forecast: \${mood}\`;`}</pre>
-                    </div>
-                    <div className="rounded-[22px] border border-white/8 bg-white/5 px-4 py-4">
-                      <p className="text-[0.68rem] uppercase tracking-[0.16em] text-[#8fa1c5]">
-                        Description
-                      </p>
-                      <p className="mt-2 text-base leading-7 text-[#eef3ff]">
-                        &quot;It changes the banner mood and treats slightly chilly weather like a full emergency.&quot;
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="stack-panel px-4 py-4">
-                    <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                      Best with
-                    </p>
-                    <p className="mt-2 font-display text-2xl tracking-[-0.05em]">
-                      4-8 friends
-                    </p>
-                  </div>
-                  <div className="stack-panel px-4 py-4">
-                    <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
-                      Pace
-                    </p>
-                    <p className="mt-2 font-display text-2xl tracking-[-0.05em]">
-                      Fast rounds
-                    </p>
-                  </div>
-                </div>
+              <div className="stack-panel px-4 py-4">
+                <p className="label-mono text-[color:var(--color-text-muted)]">Languages</p>
+                <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
+                  HTML JS TS Py
+                </p>
+              </div>
+              <div className="stack-panel px-4 py-4">
+                <p className="label-mono text-[color:var(--color-text-muted)]">Prompt packs</p>
+                <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
+                  600+
+                </p>
               </div>
             </div>
           </div>
-        </Card>
-
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Badge>Join Fast</Badge>
-              <CardTitle className="mt-3">Everything important is one click away.</CardTitle>
-            </div>
-            <UsersRound className="h-6 w-6 text-[color:var(--color-cobalt)]" />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-
-              return (
-                <Link key={action.title} href={action.href}>
-                  <div className="stack-panel h-full px-4 py-4 transition hover:-translate-y-1">
-                    <div className="flex items-center gap-2 text-[color:var(--color-cobalt)]">
-                      <Icon className="h-4 w-4" />
-                      <p className="text-sm font-semibold uppercase tracking-[0.14em]">
-                        {action.title}
-                      </p>
-                    </div>
-                    <p className="mt-3 text-sm leading-7 text-[color:var(--color-muted)]">
-                      {action.description}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </Card>
+          <HeroWorkbench />
+        </div>
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-3">
-        {highlights.map((feature) => {
-          const Icon = feature.icon;
-
-          return (
-            <Card key={feature.title} className="space-y-4">
-              <div className="surface-pill inline-flex h-12 w-12 items-center justify-center rounded-[18px] text-[color:var(--color-cobalt)]">
-                <Icon className="h-5 w-5" />
+      <section id="how-it-works" className="grid gap-4">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <Badge>How It Works</Badge>
+            <h2 className="mt-3 font-display text-3xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
+              One prompt. A few devs. Terrible communication.
+            </h2>
+          </div>
+          <p className="hidden max-w-md text-sm leading-7 text-[color:var(--color-text-muted)] lg:block">
+            Relay is fast on purpose. Short rounds keep the room moving and make the final reveal
+            hit harder.
+          </p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-4">
+          {steps.map((step, index) => (
+            <Card key={step.title} className="noise-panel space-y-4">
+              <div className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] font-mono text-sm text-[color:var(--color-accent-hover)]">
+                0{index + 1}
               </div>
               <div>
-                <CardTitle>{feature.title}</CardTitle>
-                <CardDescription className="mt-2">{feature.description}</CardDescription>
+                <CardTitle>{step.title}</CardTitle>
+                <CardDescription className="mt-2">{step.body}</CardDescription>
               </div>
             </Card>
-          );
-        })}
+          ))}
+        </div>
       </section>
+
+      <section id="features" className="grid gap-4">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <Badge>Features</Badge>
+            <h2 className="mt-3 font-display text-3xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
+              Fast rounds. Weird outcomes. Surprisingly usable.
+            </h2>
+          </div>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+
+            return (
+              <Card key={feature.title} className="space-y-4">
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] text-[color:var(--color-accent-hover)]">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle>{feature.title}</CardTitle>
+                  <CardDescription className="mt-2">{feature.body}</CardDescription>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="space-y-5">
+          <Badge>Built For Real Groups</Badge>
+          <div>
+            <CardTitle>Made for hackathons, game jams, classrooms, and friend groups.</CardTitle>
+            <CardDescription className="mt-2">
+              Relay works best when people are half serious and half trying to make each other laugh.
+              It is a coding game, but the payoff is social.
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {useCases.map((useCase) => (
+              <span
+                key={useCase}
+                className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-3 py-2 font-mono text-[0.75rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]"
+              >
+                {useCase}
+              </span>
+            ))}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="stack-panel px-4 py-4">
+              <p className="label-mono text-[color:var(--color-text-muted)]">Room spin-up</p>
+              <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
+                Create a room fast, tweak the vibe, and share one code.
+              </p>
+            </div>
+            <div className="stack-panel px-4 py-4">
+              <p className="label-mono text-[color:var(--color-text-muted)]">Reveal payoff</p>
+              <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
+                Playback, favorites, and replay links turn the ending into the event.
+              </p>
+            </div>
+            <div className="stack-panel px-4 py-4">
+              <p className="label-mono text-[color:var(--color-text-muted)]">Low friction</p>
+              <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
+                Guests get in quickly. Real accounts can wait until later.
+              </p>
+            </div>
+          </div>
+        </Card>
+        <Card className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <Badge>Tonight&apos;s Demo Rooms</Badge>
+              <CardTitle className="mt-3">Believable rooms, not placeholder fluff.</CardTitle>
+            </div>
+            <Gamepad2 className="h-5 w-5 text-[color:var(--color-accent-hover)]" />
+          </div>
+          <div className="space-y-3">
+            {demoRooms.map((roomName, index) => (
+              <div
+                key={roomName}
+                className="flex items-center justify-between rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-3"
+              >
+                <div>
+                  <p className="font-medium text-[color:var(--color-text-strong)]">{roomName}</p>
+                  <p className="mt-1 font-mono text-[0.74rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                    {index === 0 ? "private" : index === 1 ? "live" : "public"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-[color:var(--color-text-soft)]">
+                  <span className="inline-flex items-center gap-2">
+                    <Users className="h-4 w-4 text-[color:var(--color-accent-hover)]" />
+                    {4 + index}
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <TimerReset className="h-4 w-4 text-[color:var(--color-warning)]" />
+                    {index === 2 ? "reveal" : "live"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="stack-panel px-4 py-4">
+            <p className="label-mono text-[color:var(--color-text-muted)]">Good room copy matters</p>
+            <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
+              Strong prompts, believable file names, and a grounded tool-like UI make the whole product feel
+              like something actual devs would pull up during a jam.
+            </p>
+          </div>
+        </Card>
+      </section>
+
+      <section className="rounded-[20px] border border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(22,27,34,0.98),rgba(12,18,24,0.98))] p-6 shadow-[var(--shadow-panel)] sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <Badge>Ready To Try It</Badge>
+            <h2 className="mt-3 font-display text-3xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
+              Start a room and see what your friends turn your code into.
+            </h2>
+            <p className="mt-3 max-w-2xl text-base leading-8 text-[color:var(--color-text-soft)]">
+              Built for quick starts, short rounds, and the kind of cursed creativity that only appears when
+              too many devs touch the same idea.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/play">
+              <Button size="lg">
+                Start a Room
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Button variant="secondary" size="lg" onClick={openDialog}>
+              <WandSparkles className="h-4 w-4" />
+              Try Demo
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--color-border)] pt-4 text-sm text-[color:var(--color-text-muted)]">
+        <span>Relay</span>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link href="/play">Play</Link>
+          <Link href="/rooms/public">Public Rooms</Link>
+          <Link href="/account">Account</Link>
+        </div>
+      </footer>
     </div>
   );
 }

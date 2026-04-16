@@ -26,6 +26,7 @@ export const createRoomSchema = z.object({
   profanityFilterEnabled: z.boolean().default(true),
   quickPlayDiscoverable: z.boolean().default(false),
   turnstileToken: z.string().optional(),
+  demoMode: z.boolean().optional(),
 });
 
 export const joinRoomSchema = z.object({
@@ -33,12 +34,14 @@ export const joinRoomSchema = z.object({
   nickname: z.string().trim().min(2).max(28),
   asSpectator: z.boolean().default(false),
   turnstileToken: z.string().optional(),
+  demoMode: z.boolean().optional(),
 });
 
 export const quickPlaySchema = z.object({
   skillMode: z.enum(["beginner", "intermediate", "advanced", "chaos"]),
   nickname: z.string().trim().min(2).max(28),
   turnstileToken: z.string().optional(),
+  demoMode: z.boolean().optional(),
 });
 
 export const updateRoomSettingsSchema = z.object({

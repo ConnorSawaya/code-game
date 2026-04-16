@@ -1,3 +1,5 @@
+import { getDemoRoomCodeForSkillMode } from "@/features/demo/shared";
+import { isDemoModeEnabled } from "@/features/demo/server";
 import { jsonError, jsonOk } from "@/lib/http";
 import { RouteError, getErrorDetails, requireUser } from "@/features/api/route-utils";
 import { createRoom, createRoomSchema } from "@/features/rooms/service";
@@ -6,8 +8,15 @@ import { verifyTurnstileToken } from "@/features/moderation/turnstile";
 
 export async function POST(request: Request) {
   try {
-    const user = await requireUser();
     const body = createRoomSchema.parse(await request.json());
+
+    if (body.demoMode && (await isDemoModeEnabled())) {
+      return jsonOk({
+        room_code: getDemoRoomCodeForSkillMode(body.skillMode),
+      });
+    }
+
+    const user = await requireUser();
     const ip = getClientIp(request.headers);
     const allowed = await enforceRateLimit({
       action: "create-room",

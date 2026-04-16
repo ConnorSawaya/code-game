@@ -9,6 +9,7 @@ export interface ReplaySnapshot {
   replaySlug: string;
   roomCode: string;
   skillMode: string;
+  isDemo?: boolean;
   completedAt: string | null;
   members: Record<string, { nickname: string; role: string }>;
   chains: ChainSnapshot[];

@@ -21,7 +21,7 @@ export function SegmentedControl<TValue extends string>({
   return (
     <div
       className={cn(
-        "inline-flex flex-wrap gap-2 rounded-[20px] border border-[color:var(--color-border)] bg-[rgba(255,255,255,0.58)] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+        "inline-flex flex-wrap gap-1 rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] p-1",
         className,
       )}
     >
@@ -33,10 +33,10 @@ export function SegmentedControl<TValue extends string>({
             key={option.value}
             type="button"
             className={cn(
-              "rounded-[16px] px-3.5 py-2 text-sm font-semibold transition",
+              "rounded-[10px] px-3 py-2 text-sm font-semibold transition",
               active
-                ? "bg-[linear-gradient(180deg,var(--color-cobalt),var(--color-cobalt-strong))] text-white shadow-[0_16px_28px_rgba(53,90,216,0.22)]"
-                : "text-[color:var(--color-muted)] hover:bg-white/90 hover:text-[color:var(--color-ink)]",
+                ? "bg-[color:var(--color-accent)] text-white"
+                : "text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-bg-elevated)] hover:text-[color:var(--color-text-strong)]",
             )}
             onClick={() => onChange(option.value)}
           >

@@ -1,9 +1,26 @@
 import "server-only";
 
 import { getViewer } from "@/features/auth/queries";
+import { buildDemoAccountData } from "@/features/demo/mock-data";
+import {
+  getServerNicknameFallback,
+  hasSupabaseServerEnv,
+  isDemoModeEnabled,
+} from "@/features/demo/server";
 import { getSupabaseAdminClient } from "@/features/supabase/admin";
 
 export async function getAccountPageData() {
+  if (await isDemoModeEnabled()) {
+    return buildDemoAccountData(await getServerNicknameFallback());
+  }
+
+  if (!hasSupabaseServerEnv()) {
+    return {
+      viewer: null,
+      replays: [],
+    };
+  }
+
   const viewer = await getViewer();
 
   if (!viewer) {
