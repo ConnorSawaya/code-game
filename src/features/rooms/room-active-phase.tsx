@@ -101,6 +101,7 @@ export function RoomActivePhase({
 
   const isSubmitDisabled =
     submitting === "submit" || draft.trim().length === 0 || !isDraftValid;
+  const isCodeTurn = task?.expectedStepType === "code";
 
   const phaseLabel = task
     ? task.expectedStepType === "prompt"
@@ -120,7 +121,7 @@ export function RoomActivePhase({
             ? `previous_step: ${task.previousStep.stepType}`
             : "previous_step: prompt",
           canPreviewCurrentLanguage
-            ? "// Run the sandbox before you lock the snippet."
+            ? "// Use Run preview if you want a quick sandbox check."
             : "// This language stays text-only for now.",
         ]
       : undefined;
@@ -141,7 +142,12 @@ export function RoomActivePhase({
       : undefined;
 
   return (
-    <section className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
+    <section
+      className={cn(
+        "grid gap-6",
+        isCodeTurn ? "grid-cols-1" : "2xl:grid-cols-[minmax(0,1fr)_300px]",
+      )}
+    >
       <Card className="min-w-0 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-3">
@@ -156,7 +162,7 @@ export function RoomActivePhase({
                   ? task.expectedStepType === "prompt"
                     ? "Seed the first bad idea"
                     : task.expectedStepType === "code"
-                      ? `Write the next step in ${getLanguageLabel(task.language)}`
+                      ? `${getLanguageLabel(task.language)} round`
                       : "Describe what the last dev meant"
                   : "You are spectating this turn"}
               </CardTitle>
@@ -165,13 +171,21 @@ export function RoomActivePhase({
                   ? task.expectedStepType === "prompt"
                     ? "Use a custom opener or steal one from the built-in packs."
                     : task.expectedStepType === "code"
-                      ? "Keep it compact, readable, and just weird enough that the next player can drift from your intent."
+                      ? "Write one clear step, run it if you want, then send it on."
                       : "Focus on visible behavior, not implementation details. The next player only gets your description."
                   : "Live rounds stay visible here, and spectators can queue for the next lobby after the match ends."}
               </CardDescription>
             </div>
           </div>
         </div>
+
+        {isCodeTurn ? (
+          <div className="flex flex-wrap gap-2">
+            <Badge>{skillConfig.timerSeconds}s timer</Badge>
+            <Badge>{skillConfig.lineLimit} lines</Badge>
+            <Badge>{skillConfig.charLimit} chars</Badge>
+          </div>
+        ) : null}
 
         {task?.previousStep ? (
           <div className="stack-panel space-y-3 px-5 py-5">
@@ -195,19 +209,19 @@ export function RoomActivePhase({
           <>
             {task.expectedStepType === "code" ? (
               <div className="space-y-4">
-                <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_360px]">
+                <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.45fr)_390px]">
                   <div className="space-y-4">
                     <MonacoCodeEditor
                       value={draft}
                       language={task.language ?? "javascript"}
                       onChange={setDraft}
-                      height={460}
+                      height={540}
                       notesLines={editorNotes}
                       settingsLines={editorSettings}
                       toolsLines={[
-                        "Explorer opens the active file, notes, and room settings.",
+                        "Explorer follows the active file language.",
                         canPreviewCurrentLanguage
-                          ? "Run the sandbox before you submit if you want a quick reality check."
+                          ? "Use Run preview before you submit if you want a quick check."
                           : "Python stays text-only for now, so Relay stays honest.",
                         "Autosave keeps your current draft on this machine.",
                       ]}
@@ -235,7 +249,7 @@ export function RoomActivePhase({
                         snippet={draft}
                         language={task.language ?? "html_css_js"}
                         autoRun={false}
-                        height={460}
+                        height={540}
                       />
                     ) : (
                       <div className="stack-panel space-y-3 px-5 py-5">
@@ -251,28 +265,21 @@ export function RoomActivePhase({
                         </p>
                       </div>
                     )}
-                    <div className="stack-panel space-y-3 px-5 py-5">
-                      <FieldLabel className="text-[color:var(--color-text-soft)]">
-                        Before you submit
-                      </FieldLabel>
-                      <p className="text-sm leading-7 text-[color:var(--color-text-muted)]">
-                        Make one clean idea, run it once if the sandbox is available, then send it.
-                        The next player only gets one shot at understanding you.
-                      </p>
-                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="space-y-2">
-                    <p className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
-                      Submission state
-                    </p>
-                    <p className="text-sm leading-7 text-[color:var(--color-text-soft)]">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge>{codeMetrics?.lineCount ?? 0}/{skillConfig.lineLimit} lines</Badge>
+                      <Badge>{codeMetrics?.charCount ?? 0}/{skillConfig.charLimit} chars</Badge>
+                      <Badge>{canPreviewCurrentLanguage ? "Preview ready" : "Text only"}</Badge>
+                    </div>
+                    <p className="text-sm leading-6 text-[color:var(--color-text-soft)]">
                       {codeMetrics?.isValid
                         ? canPreviewCurrentLanguage
-                          ? "Run the sandbox if you want, then lock the snippet in."
-                          : "The snippet fits the round limits and is ready to send."
-                        : "This draft is too long for the room settings. Trim it before submitting."}
+                          ? "Use Run preview in the runtime panel if you want a quick check."
+                          : "This one is ready to send."
+                        : "Trim the snippet until it fits the room limits."}
                     </p>
                   </div>
                   <Button
@@ -467,42 +474,44 @@ export function RoomActivePhase({
         )}
       </Card>
 
-      <Card className="space-y-5">
-        <CardTitle>Round board</CardTitle>
-        <CardDescription>
-          One visible step, one short turn, one chance to be understood.
-        </CardDescription>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1">
-          <div className="stack-panel px-4 py-4">
-            <p className="label-mono text-[color:var(--color-text-muted)]">Timer</p>
-            <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-              {skillConfig.timerSeconds}s
+      {!isCodeTurn ? (
+        <Card className="space-y-5">
+          <CardTitle>Round board</CardTitle>
+          <CardDescription>
+            One visible step, one short turn, one chance to be understood.
+          </CardDescription>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            <div className="stack-panel px-4 py-4">
+              <p className="label-mono text-[color:var(--color-text-muted)]">Timer</p>
+              <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
+                {skillConfig.timerSeconds}s
+              </p>
+            </div>
+            <div className="stack-panel px-4 py-4">
+              <p className="label-mono text-[color:var(--color-text-muted)]">Lines</p>
+              <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
+                {skillConfig.lineLimit}
+              </p>
+            </div>
+            <div className="stack-panel px-4 py-4">
+              <p className="label-mono text-[color:var(--color-text-muted)]">Chars</p>
+              <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
+                {skillConfig.charLimit}
+              </p>
+            </div>
+          </div>
+          <div className="stack-panel space-y-3 px-5 py-5">
+            <FieldLabel className="text-[color:var(--color-text-soft)]">Phase reminder</FieldLabel>
+            <p className="text-sm leading-7 text-[color:var(--color-text-muted)]">
+              {snapshot.game?.phase === "prompt"
+                ? "Every player seeds one chain with a custom prompt or a curated starter from the library."
+                : snapshot.game?.phase === "code"
+                  ? "Write a compact snippet. Relay is funniest when the next player can misread your intent."
+                  : "Describe what the previous code seems to do in normal language, not implementation jargon."}
             </p>
           </div>
-          <div className="stack-panel px-4 py-4">
-            <p className="label-mono text-[color:var(--color-text-muted)]">Lines</p>
-            <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-              {skillConfig.lineLimit}
-            </p>
-          </div>
-          <div className="stack-panel px-4 py-4">
-            <p className="label-mono text-[color:var(--color-text-muted)]">Chars</p>
-            <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-              {skillConfig.charLimit}
-            </p>
-          </div>
-        </div>
-        <div className="stack-panel space-y-3 px-5 py-5">
-          <FieldLabel className="text-[color:var(--color-text-soft)]">Phase reminder</FieldLabel>
-          <p className="text-sm leading-7 text-[color:var(--color-text-muted)]">
-            {snapshot.game?.phase === "prompt"
-              ? "Every player seeds one chain with a custom prompt or a curated starter from the library."
-              : snapshot.game?.phase === "code"
-                ? "Write a compact snippet. Relay is funniest when the next player can misread your intent."
-                : "Describe what the previous code seems to do in normal language, not implementation jargon."}
-          </p>
-        </div>
-      </Card>
+        </Card>
+      ) : null}
     </section>
   );
 }

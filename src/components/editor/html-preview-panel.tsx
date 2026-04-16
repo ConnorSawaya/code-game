@@ -304,7 +304,7 @@ export function HtmlPreviewPanel({
             }}
           >
             <PlayCircle className="h-3.5 w-3.5 text-[#1890f1]" />
-            {hasPendingChanges ? "Run changes" : "Re-run"}
+            {hasPendingChanges ? "Run preview" : "Run again"}
           </button>
         </div>
       </div>

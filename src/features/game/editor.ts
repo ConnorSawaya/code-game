@@ -22,14 +22,27 @@ export function getMonacoLanguage(language: CodeLanguage) {
 export function getEditorFilename(language: CodeLanguage) {
   switch (language) {
     case "typescript":
-      return "relay-step.ts";
+      return "enemySpawner.ts";
     case "python":
-      return "relay-step.py";
+      return "levelGen.py";
     case "javascript":
-      return "relay-step.js";
+      return "playerController.js";
     case "html_css_js":
     default:
-      return "relay-step.html";
+      return "index.html";
+  }
+}
+
+function getEditorSourceFolder(language: CodeLanguage) {
+  switch (language) {
+    case "python":
+      return "game";
+    case "html_css_js":
+      return "web";
+    case "javascript":
+    case "typescript":
+    default:
+      return "src";
   }
 }
 
@@ -163,10 +176,11 @@ export function getMonacoEditorOptions(readOnly = false): Monaco.editor.IStandal
 
 export function getEditorTreeItems(language: CodeLanguage) {
   const filename = getEditorFilename(language);
+  const sourceFolder = getEditorSourceFolder(language);
 
   return [
     { label: "relay-room", depth: 0, kind: "folder" as const },
-    { label: "src", depth: 1, kind: "folder" as const },
+    { label: sourceFolder, depth: 1, kind: "folder" as const },
     {
       label: filename,
       depth: 2,
