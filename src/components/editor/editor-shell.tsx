@@ -264,7 +264,15 @@ export function EditorShell({
               const isOpen = isFolder ? openFolders.has(item.label) : false;
               const itemDocument = getDocumentForTreeItem(item, tabLabel);
               const isActiveDocument = itemDocument === activeDocument;
-              const Icon = isFolder ? (isOpen ? FolderOpen : Folder) : FileCode2;
+              const Icon = isFolder
+                ? isOpen
+                  ? FolderOpen
+                  : Folder
+                : itemDocument === "notes"
+                  ? FileText
+                  : itemDocument === "settings"
+                    ? FileJson2
+                    : FileCode2;
 
               return (
                 <button

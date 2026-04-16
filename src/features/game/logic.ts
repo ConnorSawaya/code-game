@@ -131,7 +131,8 @@ export function canRunPreviewLanguage(language: CodeLanguage | null) {
   return (
     language === "html_css_js" ||
     language === "javascript" ||
-    language === "typescript"
+    language === "typescript" ||
+    language === "python"
   );
 }
 

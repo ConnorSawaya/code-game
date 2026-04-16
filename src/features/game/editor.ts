@@ -46,6 +46,10 @@ function getEditorSourceFolder(language: CodeLanguage) {
   }
 }
 
+export function getEditorWorkspacePath(language: CodeLanguage) {
+  return `${getEditorSourceFolder(language)}/${getEditorFilename(language)}`;
+}
+
 export function registerRelayMonacoTheme(monaco: typeof Monaco) {
   if (relayThemeRegistered) {
     return;
@@ -282,12 +286,14 @@ export function buildPreviewSrcDoc(
 ) {
   const trimmed = snippet.trim();
   const csp =
-    "default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data: https:;";
+    language === "python"
+      ? "default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; font-src data: https:;"
+      : "default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data: https:;";
   const bridgeScript = buildRuntimeBridgeScript();
   const previewMarkup = `
     <main class="relay-preview">
       <h1>Relay Preview</h1>
-      <p>This sandbox only runs HTML/CSS/JS snippets.</p>
+      <p>${language === "python" ? "Run Python safely in the sandbox." : "Run the current snippet in the sandbox."}</p>
       <button id="preview-button">Press me</button>
       <div id="app" class="preview-card">Live output target</div>
     </main>
@@ -308,7 +314,42 @@ export function buildPreviewSrcDoc(
   const shellEnd = "</body></html>";
 
   if (!trimmed) {
-    return `${shellStart}<div style="display:grid;place-items:center;min-height:220px;color:#6b7280;border:1px dashed #d1d5db;border-radius:14px;">Start typing HTML, CSS, and JS to preview it here.</div>${shellEnd}`;
+    return `${shellStart}<div style="display:grid;place-items:center;min-height:220px;color:#6b7280;border:1px dashed #d1d5db;border-radius:14px;">Start typing code to preview it here.</div>${shellEnd}`;
+  }
+
+  if (language === "python") {
+    const escapedPython = JSON.stringify(trimmed);
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta http-equiv="Content-Security-Policy" content="${csp}" />${previewStyles}${bridgeScript}<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script><script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script></head><body><main class="relay-preview"><h1>Relay Python Preview</h1><p>stdout and tracebacks appear below.</p><pre id="app" class="preview-card" style="white-space:pre-wrap;margin:0;"></pre></main><script>
+      const relayOutput = document.getElementById("app");
+      const code = ${escapedPython};
+      const pushLine = (value, level = "log") => {
+        const text = String(value);
+        relayOutput.textContent += text;
+        relayPost({ type: "console", level, message: text.replace(/\\n$/, "") || text });
+      };
+      function builtinRead(filename) {
+        if (!Sk.builtinFiles || !Sk.builtinFiles["files"][filename]) {
+          throw new Error("File not found: " + filename);
+        }
+        return Sk.builtinFiles["files"][filename];
+      }
+      (async () => {
+        relayOutput.textContent = "";
+        try {
+          Sk.configure({
+            output: (text) => pushLine(text, "log"),
+            read: builtinRead,
+            __future__: Sk.python3,
+          });
+          await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
+          relayPost({ type: "ready", message: "Python run finished." });
+        } catch (error) {
+          const message = error && error.toString ? error.toString() : String(error);
+          pushLine(message + "\\n", "error");
+          relayPost({ type: "error", level: "error", message });
+        }
+      })();
+    </script></body></html>`;
   }
 
   if (language === "javascript") {

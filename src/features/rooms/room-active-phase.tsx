@@ -102,6 +102,20 @@ export function RoomActivePhase({
   const isSubmitDisabled =
     submitting === "submit" || draft.trim().length === 0 || !isDraftValid;
   const isCodeTurn = task?.expectedStepType === "code";
+  const taskPanelLabel = task
+    ? task.expectedStepType === "code"
+      ? "Your prompt"
+      : task.expectedStepType === "description"
+        ? "Code to describe"
+        : "Previous step"
+    : "Current step";
+  const taskPanelHint = task
+    ? task.expectedStepType === "code"
+      ? "Write code for this step."
+      : task.expectedStepType === "description"
+        ? "Describe what this code seems to do."
+        : null
+    : null;
 
   const phaseLabel = task
     ? task.expectedStepType === "prompt"
@@ -121,7 +135,7 @@ export function RoomActivePhase({
             ? `previous_step: ${task.previousStep.stepType}`
             : "previous_step: prompt",
           canPreviewCurrentLanguage
-            ? "// Use Run preview if you want a quick sandbox check."
+            ? "// Use Run code if you want a quick sandbox check."
             : "// This language stays text-only for now.",
         ]
       : undefined;
@@ -188,7 +202,12 @@ export function RoomActivePhase({
 
         {task?.previousStep ? (
           <div className="stack-panel space-y-3 px-5 py-5">
-            <FieldLabel>Previous step</FieldLabel>
+            <div className="space-y-2">
+              <FieldLabel>{taskPanelLabel}</FieldLabel>
+              {taskPanelHint ? (
+                <p className="text-sm text-[color:var(--color-text-muted)]">{taskPanelHint}</p>
+              ) : null}
+            </div>
             {task.previousStep.stepType === "code" ? (
               <ReadonlyCode
                 value={task.previousStep.text}
@@ -220,8 +239,8 @@ export function RoomActivePhase({
                       toolsLines={[
                         "Explorer follows the active file language.",
                         canPreviewCurrentLanguage
-                          ? "Use Run preview before you submit if you want a quick check."
-                          : "Python stays text-only for now, so Relay stays honest.",
+                          ? "Use Run code before you submit if you want a quick check."
+                          : "This language stays text-only for now.",
                         "Autosave keeps your current draft on this machine.",
                       ]}
                       footer={
@@ -259,8 +278,7 @@ export function RoomActivePhase({
                           </FieldLabel>
                         </div>
                         <p className="text-sm leading-7 text-[color:var(--color-text-muted)]">
-                          Python stays text-only right now. Relay still saves and rotates the snippet correctly,
-                          but the sandbox only runs browser-safe HTML/CSS/JS, JavaScript, and TypeScript.
+                          This language does not have an active sandbox yet, so Relay keeps it as text only.
                         </p>
                       </div>
                     )}
@@ -276,7 +294,7 @@ export function RoomActivePhase({
                     <p className="text-sm leading-6 text-[color:var(--color-text-soft)]">
                       {codeMetrics?.isValid
                         ? canPreviewCurrentLanguage
-                          ? "Use Run preview in the runtime panel if you want a quick check."
+                          ? "Use Run code in the right panel if you want a quick check."
                           : "This one is ready to send."
                         : "Trim the snippet until it fits the room limits."}
                     </p>

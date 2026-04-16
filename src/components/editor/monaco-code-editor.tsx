@@ -11,6 +11,7 @@ import {
   getEditorTreeItems,
   getMonacoEditorOptions,
   getMonacoLanguage,
+  getEditorWorkspacePath,
   registerRelayMonacoTheme,
 } from "@/features/game/editor";
 import { cn } from "@/lib/utils";
@@ -45,11 +46,12 @@ export function MonacoCodeEditor({
   toolsLines?: string[];
 }) {
   const fileName = title ?? getEditorFilename(language);
+  const workspacePath = getEditorWorkspacePath(language);
 
   return (
     <EditorShell
       className={className}
-      title={`relay/${fileName}`}
+      title={`relay/${workspacePath}`}
       tabLabel={fileName}
       treeItems={getEditorTreeItems(language)}
       footer={footer}

@@ -62,6 +62,14 @@ async function preparePreviewDocument(
     }
   }
 
+  if (language === "python") {
+    return {
+      srcDoc: buildPreviewSrcDoc(snippet, language),
+      problems: [],
+      runtimeLabel: "Python sandbox",
+    };
+  }
+
   return {
     srcDoc: buildPreviewSrcDoc(snippet, language),
     problems: [],
@@ -259,7 +267,7 @@ export function HtmlPreviewPanel({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d2d30] bg-[#161b22] px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-semibold text-[#e6edf3]">
           <MonitorPlay className="h-4 w-4 text-[#1890f1]" />
-          Runtime panel
+          Run / Output
           {hasPendingChanges ? (
             <span className="rounded-full border border-[rgba(24,144,241,0.35)] bg-[rgba(24,144,241,0.12)] px-2 py-0.5 font-mono text-[0.62rem] uppercase tracking-[0.12em] text-[#78bfff]">
               changes pending
@@ -304,7 +312,7 @@ export function HtmlPreviewPanel({
             }}
           >
             <PlayCircle className="h-3.5 w-3.5 text-[#1890f1]" />
-            {hasPendingChanges ? "Run preview" : "Run again"}
+            {hasPendingChanges ? "Run code" : "Run again"}
           </button>
         </div>
       </div>
