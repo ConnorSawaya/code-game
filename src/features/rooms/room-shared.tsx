@@ -97,7 +97,7 @@ export function RoomHeader({
   return (
     <Card className="overflow-hidden p-0">
       <div className="hero-grid relative overflow-hidden px-5 py-5 sm:px-6 sm:py-6">
-        <div className="relative space-y-5">
+        <div className="relative space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{snapshot.code}</Badge>
             <Badge>{getSkillModeConfig(snapshot.settings.skillMode).label}</Badge>
@@ -116,51 +116,51 @@ export function RoomHeader({
               </Badge>
             ) : null}
           </div>
-          <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
             <div className="space-y-3">
               <h1 className="font-display text-3xl tracking-[-0.05em] text-[color:var(--color-text-strong)] sm:text-[2.6rem]">
                 {snapshot.roomName}
               </h1>
-              <p className="max-w-3xl text-base leading-7 text-[color:var(--color-text-soft)] sm:text-lg">
+              <p className="max-w-3xl text-sm leading-6 text-[color:var(--color-text-soft)] sm:text-base">
                 {snapshot.status === "lobby"
-                  ? "Tune the room, stack the roster, and launch when everyone is actually ready."
+                  ? "Set the room, watch the roster, and launch when everyone is ready."
                   : snapshot.game?.phase === "reveal"
-                    ? "The whole chain is on stage now. React, favorite the best breaks, and pass the replay around."
-                    : "Only the immediately previous step is visible. The full chain stays hidden until reveal."}
+                    ? "The full chain is finally visible. React, favorite the best breaks, and pass the replay around."
+                    : "Players only see the previous step. The full chain stays hidden until reveal."}
               </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <div className="surface-pill inline-flex items-center gap-2 rounded-[12px] px-3 py-2">
+                  <span className="label-mono text-[color:var(--color-text-muted)]">code</span>
+                  <span className="font-mono text-sm font-semibold text-[color:var(--color-text-strong)]">
+                    {snapshot.code}
+                  </span>
+                </div>
+                <div className="surface-pill inline-flex items-center gap-2 rounded-[12px] px-3 py-2">
+                  <span className="label-mono text-[color:var(--color-text-muted)]">players</span>
+                  <span className="font-semibold text-[color:var(--color-text-strong)]">
+                    {snapshot.members.filter((member) => member.role !== "spectator").length}
+                  </span>
+                </div>
+                <div className="surface-pill inline-flex items-center gap-2 rounded-[12px] px-3 py-2">
+                  <span className="label-mono text-[color:var(--color-text-muted)]">phase</span>
+                  <span className="font-semibold capitalize text-[color:var(--color-text-strong)]">
+                    {snapshot.status === "lobby" ? "Setup" : snapshot.game?.phase ?? "Live"}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="stack-panel px-4 py-4">
-                <p className="label-mono text-[color:var(--color-text-muted)]">Room code</p>
-                <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-                  {snapshot.code}
-                </p>
-              </div>
-              <div className="stack-panel px-4 py-4">
-                <p className="label-mono text-[color:var(--color-text-muted)]">Players</p>
-                <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-                  {snapshot.members.filter((member) => member.role !== "spectator").length}
-                </p>
-              </div>
-              <div className="stack-panel px-4 py-4">
-                <p className="label-mono text-[color:var(--color-text-muted)]">Phase</p>
-                <p className="mt-2 font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-                  {snapshot.status === "lobby" ? "Setup" : snapshot.game?.phase ?? "Live"}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={onCopyCode}>
-              <Copy className="h-4 w-4" />
-              Copy room code
-            </Button>
-            {snapshot.game?.replaySlug ? (
-              <Button variant="ghost" onClick={onCopyReplay}>
+            <div className="flex flex-wrap gap-2 xl:justify-end">
+              <Button variant="secondary" onClick={onCopyCode}>
                 <Copy className="h-4 w-4" />
-                Copy replay link
+                Copy room code
               </Button>
-            ) : null}
+              {snapshot.game?.replaySlug ? (
+                <Button variant="ghost" onClick={onCopyReplay}>
+                  <Copy className="h-4 w-4" />
+                  Copy replay link
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
@@ -192,9 +192,9 @@ export function RoomRosterCard({
     <Card className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <CardTitle>Room roster</CardTitle>
+          <CardTitle>Players</CardTitle>
           <CardDescription>
-            {activePlayers} active players, {spectators} spectators.
+            {activePlayers} active / {spectators} spectating
           </CardDescription>
         </div>
         <div className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] text-[color:var(--color-accent-hover)]">

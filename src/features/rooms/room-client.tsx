@@ -304,16 +304,14 @@ export function RoomClient({
       {isDemoRoom ? (
         <Card className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <Badge>Demo / Testing Controls</Badge>
+                <Badge>Demo Tools</Badge>
                 <Badge>Temporary</Badge>
               </div>
-              <CardTitle className="mt-3">Mock the awkward cases without waiting on backend work.</CardTitle>
-              <CardDescription className="mt-2">
-                These controls only exist in demo mode. Use them to move phases, reset the room,
-                and verify reveal or spectator states quickly.
-              </CardDescription>
+              <p className="mt-3 text-sm text-[color:var(--color-text-muted)]">
+                Advance or reset this demo room without waiting on backend state.
+              </p>
             </div>
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] text-[color:var(--color-warning)]">
               <TestTube2 className="h-5 w-5" />
@@ -461,28 +459,29 @@ export function RoomClient({
         />
       ) : null}
 
-      <RoomReportCard
-        reportReason={reportReason}
-        setReportReason={setReportReason}
-        reportDetails={reportDetails}
-        setReportDetails={setReportDetails}
-        onTurnstileToken={setTurnstileToken}
-        onReport={() =>
-          isDemoRoom
-            ? handleDemoMutation("report", (current) => current, "Demo report recorded.")
-            : void handleApi("report", async () => {
-                await postJson(`/api/room/${snapshot.code}/report`, {
-                  reason: reportReason,
-                  details: reportDetails,
-                  turnstileToken,
-                });
-                setReportReason("");
-                setReportDetails("");
-              })
-        }
-        onRefresh={refreshRoom}
-        submitting={submitting}
-      />
+      {!isDemoRoom && snapshot.settings.visibility === "public" ? (
+        <RoomReportCard
+          reportReason={reportReason}
+          setReportReason={setReportReason}
+          reportDetails={reportDetails}
+          setReportDetails={setReportDetails}
+          onTurnstileToken={setTurnstileToken}
+          onReport={() =>
+            void handleApi("report", async () => {
+              await postJson(`/api/room/${snapshot.code}/report`, {
+                reason: reportReason,
+                details: reportDetails,
+                turnstileToken,
+              });
+              setReportReason("");
+              setReportDetails("");
+            })
+          }
+          onRefresh={refreshRoom}
+          submitting={submitting}
+          showReport
+        />
+      ) : null}
     </div>
   );
 }

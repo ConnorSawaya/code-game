@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
+  ChevronDown,
+  ChevronUp,
   DoorOpen,
   LockKeyhole,
   RadioTower,
+  SlidersHorizontal,
   TestTube2,
-  TimerReset,
   WandSparkles,
 } from "lucide-react";
 import { useDemoMode } from "@/components/providers/demo-mode-provider";
@@ -26,7 +27,7 @@ import { postJson } from "@/lib/client-api";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, FieldHint, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { SelectableChip } from "@/components/ui/chip";
 import { TurnstileWidget } from "@/components/ui/turnstile-widget";
@@ -67,6 +68,7 @@ export function PlayHub() {
   const [playerCap, setPlayerCap] = useState(8);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   const skillConfig = useMemo(() => getSkillModeConfig(skillMode), [skillMode]);
   const availableLanguages = useMemo(
@@ -251,88 +253,66 @@ export function PlayHub() {
 
   return (
     <div className="section-grid">
-      <section className="grid gap-5 xl:grid-cols-[0.92fr_1.08fr]">
-        <Card className="space-y-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge>Play</Badge>
-            {shouldUseDemoBackend ? <Badge>Demo backend active</Badge> : <Badge>Live backend</Badge>}
-          </div>
-          <div>
-            <CardTitle className="text-[2rem] sm:text-[2.4rem]">
-              Start a room, join a code, or jump straight into a test match.
-            </CardTitle>
-            <CardDescription className="mt-3 max-w-2xl text-base leading-7">
-              Relay should feel fast before the first round even begins. Set your nickname once,
-              pick the room vibe, and get into the fun part quickly.
-            </CardDescription>
-          </div>
-          {!backendConfigured ? (
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-warning)]">Backend note</p>
-              <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
-                Supabase env is missing in this workspace. Real multiplayer flows are preserved,
-                but demo mode is the safest way to test the product end-to-end right now.
-              </p>
+      <Card className="space-y-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>Play</Badge>
+              {shouldUseDemoBackend ? <Badge>Demo backend active</Badge> : <Badge>Live backend</Badge>}
+              <Badge>{skillConfig.label}</Badge>
             </div>
-          ) : null}
-          <Field>
+            <div>
+              <CardTitle className="text-[1.9rem] sm:text-[2.2rem]">
+                Get into a room fast.
+              </CardTitle>
+              <CardDescription className="mt-2 max-w-2xl text-base">
+                Set a nickname, start a room, or punch in a code. The rest should stay out of your way.
+              </CardDescription>
+            </div>
+          </div>
+          <Field className="w-full max-w-[340px]">
             <FieldLabel>Nickname</FieldLabel>
             <Input
               placeholder="late-night-dev"
               value={nickname}
               onChange={(event) => setNickname(event.target.value)}
             />
-            <FieldHint>Guests are first-class here. Pick something quick and recognizable.</FieldHint>
           </Field>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Time</p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-                {skillConfig.timerSeconds}s
-              </p>
-            </div>
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Lines</p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-                {skillConfig.lineLimit}
-              </p>
-            </div>
-            <div className="stack-panel px-4 py-4">
-              <p className="label-mono text-[color:var(--color-text-muted)]">Chars</p>
-              <p className="mt-2 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-                {skillConfig.charLimit}
-              </p>
-            </div>
+        </div>
+        {!backendConfigured ? (
+          <div className="rounded-[14px] border border-dashed border-[rgba(210,153,34,0.45)] bg-[rgba(210,153,34,0.08)] px-4 py-3 text-sm text-[color:var(--color-text-soft)]">
+            Live backend is not configured in this workspace yet. Demo mode keeps the full room flow usable while you test.
           </div>
-        </Card>
+        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <div className="surface-pill inline-flex items-center gap-2 rounded-[12px] px-3 py-2">
+            <span className="label-mono text-[color:var(--color-text-muted)]">time</span>
+            <span className="font-semibold text-[color:var(--color-text-strong)]">{skillConfig.timerSeconds}s</span>
+          </div>
+          <div className="surface-pill inline-flex items-center gap-2 rounded-[12px] px-3 py-2">
+            <span className="label-mono text-[color:var(--color-text-muted)]">lines</span>
+            <span className="font-semibold text-[color:var(--color-text-strong)]">{skillConfig.lineLimit}</span>
+          </div>
+          <div className="surface-pill inline-flex items-center gap-2 rounded-[12px] px-3 py-2">
+            <span className="label-mono text-[color:var(--color-text-muted)]">chars</span>
+            <span className="font-semibold text-[color:var(--color-text-strong)]">{skillConfig.charLimit}</span>
+          </div>
+        </div>
+      </Card>
 
+      <section className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
         <Card className="space-y-5">
-          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <Badge>Room Profile</Badge>
-              <CardTitle className="mt-3">{skillConfig.label}</CardTitle>
-              <CardDescription className="mt-2">{skillConfig.summary}</CardDescription>
+              <Badge>Create</Badge>
+              <CardTitle className="mt-3">Start a room</CardTitle>
+              <CardDescription className="mt-2">
+                Pick the vibe, share the code, and launch when the roster looks right.
+              </CardDescription>
             </div>
-            <div className="rounded-[12px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-3 py-2 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
-              {visibility === "public" ? "public room" : "private room"}
-            </div>
+            <LockKeyhole className="mt-1 h-5 w-5 shrink-0 text-[color:var(--color-accent-hover)]" />
           </div>
-          <Field>
-            <FieldLabel>Skill Mode</FieldLabel>
-              <SegmentedControl
-                value={skillMode}
-                onChange={(value) => {
-                  setSkillMode(value);
-                  if (value === "chaos" && languageMode === "single") {
-                    setLanguageMode("random");
-                  }
-                }}
-                options={SKILL_MODES.map((mode) => ({
-                  value: mode,
-                  label: getSkillModeConfig(mode).label,
-              }))}
-            />
-          </Field>
+
           <div className="grid gap-4 md:grid-cols-2">
             <Field>
               <FieldLabel>Room Name</FieldLabel>
@@ -350,99 +330,128 @@ export function PlayHub() {
               />
             </Field>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field>
-              <FieldLabel>Language Mode</FieldLabel>
-              <SegmentedControl
-                value={languageMode}
-                onChange={setLanguageMode}
-                options={LANGUAGE_MODES.map((mode) => ({
-                  value: mode,
-                  label:
-                    mode === "single" ? "Single" : mode === "rotate" ? "Rotate" : "Random",
-                }))}
-              />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field>
-                <FieldLabel>Rounds</FieldLabel>
-                <Input
-                  type="number"
-                  min={2}
-                  max={11}
-                  value={roundCount}
-                  onChange={(event) => setRoundCount(Number(event.target.value))}
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Player Cap</FieldLabel>
-                <Input
-                  type="number"
-                  min={3}
-                  max={12}
-                  value={playerCap}
-                  onChange={(event) => setPlayerCap(Number(event.target.value))}
-                />
-              </Field>
-            </div>
-          </div>
-          <Field>
-            <FieldLabel>Language Pool</FieldLabel>
-            <div className="flex flex-wrap gap-2">
-              {availableLanguages.map((language) => (
-                <SelectableChip
-                  key={language}
-                  selected={languagePool.includes(language)}
-                  label={LANGUAGE_LABELS[language]}
-                  onClick={() => handleToggleLanguage(language)}
-                />
-              ))}
-            </div>
-          </Field>
-          {languageMode === "single" ? (
-            <Field>
-              <FieldLabel>Single Language</FieldLabel>
-              <SegmentedControl
-                value={singleLanguage}
-                onChange={setSingleLanguage}
-                options={languagePool.map((language) => ({
-                  value: language,
-                  label: LANGUAGE_LABELS[language],
-                }))}
-              />
-            </Field>
-          ) : null}
-        </Card>
-      </section>
 
-      <section className="grid gap-5 xl:grid-cols-3">
-        <Card className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <Badge>Create</Badge>
-              <CardTitle className="mt-3">Build a room</CardTitle>
-            </div>
-            <LockKeyhole className="h-5 w-5 text-[color:var(--color-accent-hover)]" />
-          </div>
-          <CardDescription>
-            Private by default. Public when you want browsers and quick-play traffic.
-          </CardDescription>
-          {visibility === "public" || shouldUseDemoBackend ? (
+          <Field>
+            <FieldLabel>Skill Mode</FieldLabel>
+            <SegmentedControl
+              value={skillMode}
+              onChange={(value) => {
+                setSkillMode(value);
+                if (value === "chaos" && languageMode === "single") {
+                  setLanguageMode("random");
+                }
+              }}
+              options={SKILL_MODES.map((mode) => ({
+                value: mode,
+                label: getSkillModeConfig(mode).label,
+              }))}
+            />
+          </Field>
+
+          {(visibility === "public" || shouldUseDemoBackend) ? (
             <TurnstileWidget onToken={setTurnstileToken} />
           ) : null}
-          <Button fullWidth size="lg" onClick={handleCreateRoom} disabled={loadingAction === "create"}>
-            {loadingAction === "create" ? "Creating..." : shouldUseDemoBackend ? "Create demo room" : "Create room"}
-          </Button>
+
+          <div className="flex flex-wrap gap-3">
+            <Button fullWidth size="lg" className="sm:w-auto" onClick={handleCreateRoom} disabled={loadingAction === "create"}>
+              {loadingAction === "create" ? "Creating..." : shouldUseDemoBackend ? "Create demo room" : "Create room"}
+            </Button>
+            <Button
+              variant="ghost"
+              className="sm:w-auto"
+              onClick={() => setShowAdvancedSettings((current) => !current)}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Advanced settings
+              {showAdvancedSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {showAdvancedSettings ? (
+            <div className="space-y-4 rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] p-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field>
+                  <FieldLabel>Language Mode</FieldLabel>
+                  <SegmentedControl
+                    value={languageMode}
+                    onChange={setLanguageMode}
+                    options={LANGUAGE_MODES.map((mode) => ({
+                      value: mode,
+                      label:
+                        mode === "single" ? "Single" : mode === "rotate" ? "Rotate" : "Random",
+                    }))}
+                  />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field>
+                    <FieldLabel>Rounds</FieldLabel>
+                    <Input
+                      type="number"
+                      min={2}
+                      max={11}
+                      value={roundCount}
+                      onChange={(event) => setRoundCount(Number(event.target.value))}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Player Cap</FieldLabel>
+                    <Input
+                      type="number"
+                      min={3}
+                      max={12}
+                      value={playerCap}
+                      onChange={(event) => setPlayerCap(Number(event.target.value))}
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              <Field>
+                <FieldLabel>Language Pool</FieldLabel>
+                <div className="flex flex-wrap gap-2">
+                  {availableLanguages.map((language) => (
+                    <SelectableChip
+                      key={language}
+                      selected={languagePool.includes(language)}
+                      label={LANGUAGE_LABELS[language]}
+                      onClick={() => handleToggleLanguage(language)}
+                    />
+                  ))}
+                </div>
+              </Field>
+
+              {languageMode === "single" ? (
+                <Field>
+                  <FieldLabel>Single Language</FieldLabel>
+                  <SegmentedControl
+                    value={singleLanguage}
+                    onChange={setSingleLanguage}
+                    options={languagePool.map((language) => ({
+                      value: language,
+                      label: LANGUAGE_LABELS[language],
+                    }))}
+                  />
+                </Field>
+              ) : null}
+            </div>
+          ) : null}
         </Card>
 
         <Card className="space-y-5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <Badge>Join</Badge>
-              <CardTitle className="mt-3">Join by code</CardTitle>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge>Join</Badge>
+                <Badge>Quick Play</Badge>
+              </div>
+              <CardTitle className="mt-3">Jump into a room</CardTitle>
+              <CardDescription className="mt-2">
+                Use a room code, spectate, or let Relay find the fastest match.
+              </CardDescription>
             </div>
-            <DoorOpen className="h-5 w-5 text-[color:var(--color-warning)]" />
+            <DoorOpen className="mt-1 h-5 w-5 shrink-0 text-[color:var(--color-warning)]" />
           </div>
+
           <Field>
             <FieldLabel>Room Code</FieldLabel>
             <Input
@@ -452,7 +461,9 @@ export function PlayHub() {
               onChange={(event) => setRoomCode(event.target.value.toUpperCase())}
             />
           </Field>
+
           <TurnstileWidget onToken={setTurnstileToken} />
+
           <div className="grid gap-3 sm:grid-cols-2">
             <Button variant="secondary" fullWidth onClick={() => void handleJoinRoom(false)} disabled={loadingAction === "join"}>
               {loadingAction === "join" ? "Joining..." : "Join room"}
@@ -461,100 +472,57 @@ export function PlayHub() {
               {loadingAction === "spectate" ? "Opening..." : "Spectate"}
             </Button>
           </div>
-        </Card>
 
-        <Card className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <Badge>Quick Play</Badge>
-              <CardTitle className="mt-3">Match into a room</CardTitle>
-            </div>
-            <RadioTower className="h-5 w-5 text-[color:var(--color-success)]" />
-          </div>
-          <CardDescription>
-            Relay finds the oldest compatible public lobby or starts a new one with the same vibe.
-          </CardDescription>
-          <div className="stack-panel px-4 py-4">
-            <div className="flex items-center gap-2 text-[color:var(--color-text-muted)]">
-              <TimerReset className="h-4 w-4" />
-              <span className="text-sm font-medium">Current match profile</span>
-            </div>
-            <p className="mt-3 font-display text-3xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
-              {skillConfig.timerSeconds}s rounds
-            </p>
-            <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">
-              {skillMode === "chaos"
-                ? "Chaos defaults to random code languages every code round."
-                : "If you join an existing room, Relay preserves that room's language setup."}
-            </p>
-          </div>
-          <TurnstileWidget onToken={setTurnstileToken} />
-          <Button variant="accent" fullWidth size="lg" onClick={handleQuickPlay} disabled={loadingAction === "quick"}>
-            {loadingAction === "quick" ? "Matching..." : shouldUseDemoBackend ? "Find demo room" : "Find room"}
-          </Button>
-        </Card>
-      </section>
-
-      <section className="grid gap-5 xl:grid-cols-[0.92fr_1.08fr]">
-        <Card className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <Badge>Demo / Testing</Badge>
-              <CardTitle className="mt-3">Temporary unlock for local QA</CardTitle>
-            </div>
-            <TestTube2 className="h-5 w-5 text-[color:var(--color-warning)]" />
-          </div>
-          <CardDescription>
-            Use the temporary password gate when you need believable mock rooms, replay data,
-            and admin test controls without a fully wired backend.
-          </CardDescription>
-          <div className="stack-panel px-4 py-4">
-            <p className="label-mono text-[color:var(--color-text-muted)]">Current state</p>
-            <p className="mt-2 text-sm leading-7 text-[color:var(--color-text)]">
-              {demoMode
-                ? "Demo mode is active. Create, join, and replay flows will use the mock test path where needed."
-                : "Demo mode is locked. Unlock it if you want mock data and bypasses for unfinished flows."}
-            </p>
-          </div>
-          <Button variant="secondary" onClick={openDialog}>
-            <WandSparkles className="h-4 w-4" />
-            {demoMode ? "Re-open demo mode panel" : "Enter Demo Mode"}
-          </Button>
-        </Card>
-
-        <Card className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <Badge>Demo Shortcuts</Badge>
-              <CardTitle className="mt-3">Useful fake rooms for quick checks</CardTitle>
-            </div>
-            <ArrowRight className="h-5 w-5 text-[color:var(--color-accent-hover)]" />
-          </div>
-          <div className="space-y-3">
-            {demoShortcutRooms.map((room) => (
-              <div
-                key={room.code}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4"
-              >
-                <div>
-                  <p className="font-medium text-[color:var(--color-text-strong)]">{room.label}</p>
-                  <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">{room.description}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (!demoMode) {
-                      openDialog();
-                      return;
-                    }
-
-                    navigateToRoom(room.code);
-                  }}
-                >
-                  {room.code}
-                </Button>
+          <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="label-mono text-[color:var(--color-text-muted)]">Quick Play</p>
+                <p className="text-sm text-[color:var(--color-text-soft)]">
+                  Uses <span className="text-[color:var(--color-text-strong)]">{skillConfig.label}</span>{skillMode === "chaos" ? " with random code languages." : " and the current room setup."}
+                </p>
               </div>
-            ))}
+              <Badge>{skillConfig.label}</Badge>
+            </div>
+            <Button variant="accent" fullWidth size="lg" className="mt-4" onClick={handleQuickPlay} disabled={loadingAction === "quick"}>
+              <RadioTower className="h-4 w-4" />
+              {loadingAction === "quick" ? "Matching..." : shouldUseDemoBackend ? "Find demo room" : "Find room"}
+            </Button>
+          </div>
+
+          <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <TestTube2 className="h-4 w-4 text-[color:var(--color-warning)]" />
+                  <p className="text-sm font-medium text-[color:var(--color-text-strong)]">
+                    Demo / testing mode
+                  </p>
+                </div>
+                <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">
+                  {demoMode
+                    ? "Unlocked for mock rooms and faster QA."
+                    : "Use the temporary password gate when you need the mock path."}
+                </p>
+              </div>
+              <Button variant="ghost" onClick={openDialog}>
+                <WandSparkles className="h-4 w-4" />
+                {demoMode ? "Demo tools" : "Enter demo"}
+              </Button>
+            </div>
+            {demoMode ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {demoShortcutRooms.map((room) => (
+                  <Button
+                    key={room.code}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => navigateToRoom(room.code)}
+                  >
+                    {room.code}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
           </div>
         </Card>
       </section>

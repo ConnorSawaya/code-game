@@ -49,9 +49,9 @@ export function RoomLobby({
       <Card className="space-y-5">
         <div>
           <Badge>Host Panel</Badge>
-          <CardTitle className="mt-3">Tune the lobby before launch.</CardTitle>
+          <CardTitle className="mt-3">Room settings</CardTitle>
           <CardDescription className="mt-2">
-            Hosts can edit the room here. Everyone else sees the settings update live as the match gets ready.
+            Keep the setup tight, then launch.
           </CardDescription>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
@@ -169,10 +169,10 @@ export function RoomLobby({
 
       <Card className="space-y-5">
         <div>
-          <Badge>Room Limits</Badge>
-          <CardTitle className="mt-3">Current round profile</CardTitle>
+          <Badge>Round Profile</Badge>
+          <CardTitle className="mt-3">Current limits</CardTitle>
           <CardDescription className="mt-2">
-            Relay enforces these limits on both the client and server so the game stays fast and readable.
+            Short rounds keep the room moving.
           </CardDescription>
         </div>
         <div className="grid grid-cols-3 gap-3">
@@ -195,12 +195,12 @@ export function RoomLobby({
             <p className="mt-2 font-display text-3xl tracking-[-0.05em]">{skillConfig.charLimit}</p>
           </div>
         </div>
-        <div className="stack-panel space-y-3 px-5 py-5 text-sm leading-7 text-[color:var(--color-muted)]">
-          <p>Every player seeds one chain during the prompt phase.</p>
-          <p>Code and description alternate automatically until the reveal.</p>
-          <p>The room-wide language applies to every code step in that round.</p>
+        <div className="space-y-2 rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4 text-sm text-[color:var(--color-text-muted)]">
+          <p>Each player starts one chain.</p>
+          <p>Code and description alternate until reveal.</p>
+          <p>The selected language applies to that round code step.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 pt-1">
           <Badge>{getSkillModeConfig(settingsDraft.skillMode).label}</Badge>
           <Badge>{settingsDraft.quickPlayDiscoverable ? "Quick Play enabled" : "Invite only"}</Badge>
         </div>
