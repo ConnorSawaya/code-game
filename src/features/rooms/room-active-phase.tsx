@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo } from "react";
-import { Search, Sparkles, TestTube2, Wand2 } from "lucide-react";
+import { Search, Sparkles, TestTube2 } from "lucide-react";
 import type { PromptRecord, RoomSnapshot, ViewerTask } from "@/features/game/types";
 import { MonacoCodeEditor } from "@/components/editor/monaco-code-editor";
 import { HtmlPreviewPanel } from "@/components/editor/html-preview-panel";
@@ -182,10 +182,10 @@ export function RoomActivePhase({
               <CardDescription className="mt-2 max-w-2xl">
                 {task
                   ? task.expectedStepType === "prompt"
-                    ? "Use a custom opener or steal one from the built-in packs."
+                    ? "Type a short starter prompt or grab one from the library."
                     : task.expectedStepType === "code"
-                      ? "Write one clear step, preview it if you want, then send it on."
-                      : "Focus on visible behavior, not implementation details. The next player only gets your description."
+                      ? "Write one clear step. Run it if you want. Then send it on."
+                      : "Describe what this does in plain English. The next player only gets your description."
                   : "Live rounds stay visible here, and spectators can queue for the next lobby after the match ends."}
               </CardDescription>
             </div>
@@ -227,74 +227,56 @@ export function RoomActivePhase({
           <>
             {task.expectedStepType === "code" ? (
               <div className="space-y-4">
-                <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.7fr)_340px]">
-                  <div className="space-y-4">
-                    <MonacoCodeEditor
-                      value={draft}
-                      language={task.language ?? "javascript"}
-                      onChange={setDraft}
-                      height={640}
-                      notesLines={editorNotes}
-                      settingsLines={editorSettings}
-                      toolsLines={[
-                        "Explorer follows the active file language.",
-                        canPreviewCurrentLanguage
-                          ? "Use Run code before you submit if you want a quick check."
-                          : "This language stays text-only for now.",
-                        "Autosave keeps your current draft on this machine.",
-                      ]}
-                      footer={
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <span
-                            className={cn(
-                              "font-mono text-[0.68rem] uppercase tracking-[0.14em]",
-                              codeMetrics?.isValid ? "text-[#2ea043]" : "text-[#f85149]",
-                            )}
-                          >
-                            {codeMetrics?.lineCount ?? 0}/{skillConfig.lineLimit} lines /{" "}
-                            {codeMetrics?.charCount ?? 0}/{skillConfig.charLimit} chars
-                          </span>
-                          <span className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
-                            explore / notes / settings / dark+
-                          </span>
-                        </div>
-                      }
+                <MonacoCodeEditor
+                  value={draft}
+                  language={task.language ?? "javascript"}
+                  onChange={setDraft}
+                  height={560}
+                  notesLines={editorNotes}
+                  settingsLines={editorSettings}
+                  toolsLines={[
+                    "Explorer follows the active file language.",
+                    "Run code, check output, then lock the snippet in.",
+                    "Autosave keeps your current draft on this machine.",
+                  ]}
+                  panel={
+                    <HtmlPreviewPanel
+                      snippet={draft}
+                      language={task.language ?? "html_css_js"}
+                      autoRun={false}
+                      height={220}
+                      embedded
                     />
-                  </div>
-                  <div className="space-y-4">
-                    {canPreviewCurrentLanguage ? (
-                      <HtmlPreviewPanel
-                        snippet={draft}
-                        language={task.language ?? "html_css_js"}
-                        autoRun={false}
-                        height={640}
-                      />
-                    ) : (
-                      <div className="stack-panel space-y-3 px-5 py-5">
-                        <div className="flex items-center gap-2">
-                          <Wand2 className="h-4 w-4 text-[color:var(--color-accent-hover)]" />
-                          <FieldLabel className="text-[color:var(--color-text-soft)]">
-                            Runtime note
-                          </FieldLabel>
-                        </div>
-                        <p className="text-sm leading-7 text-[color:var(--color-text-muted)]">
-                          This language does not have an active sandbox yet, so Relay keeps it as text only.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  }
+                  panelPosition="bottom"
+                  footer={
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span
+                        className={cn(
+                          "font-mono text-[0.68rem] uppercase tracking-[0.14em]",
+                          codeMetrics?.isValid ? "text-[#2ea043]" : "text-[#f85149]",
+                        )}
+                      >
+                        {codeMetrics?.lineCount ?? 0}/{skillConfig.lineLimit} lines /{" "}
+                        {codeMetrics?.charCount ?? 0}/{skillConfig.charLimit} chars
+                      </span>
+                      <span className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
+                        explorer / notes / settings / run / console
+                      </span>
+                    </div>
+                  }
+                />
                 <div className="flex flex-col gap-3 rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
                       <Badge>{codeMetrics?.lineCount ?? 0}/{skillConfig.lineLimit} lines</Badge>
                       <Badge>{codeMetrics?.charCount ?? 0}/{skillConfig.charLimit} chars</Badge>
-                      <Badge>{canPreviewCurrentLanguage ? "Preview ready" : "Text only"}</Badge>
+                      <Badge>{canPreviewCurrentLanguage ? "Run ready" : "Text only"}</Badge>
                     </div>
                     <p className="text-sm leading-6 text-[color:var(--color-text-soft)]">
                       {codeMetrics?.isValid
                         ? canPreviewCurrentLanguage
-                          ? "Use Run code in the right panel if you want a quick check."
+                          ? "Use Run code inside the IDE if you want a quick check."
                           : "This one is ready to send."
                         : "Trim the snippet until it fits the room limits."}
                     </p>
@@ -373,7 +355,7 @@ export function RoomActivePhase({
                         Custom prompt
                       </FieldLabel>
                       <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">
-                        Start with an app, mechanic, toy, or tiny disaster your friends can mutate.
+                        Start with a mechanic, app, toy, or tiny disaster.
                       </p>
                     </div>
                     <Textarea
@@ -387,7 +369,7 @@ export function RoomActivePhase({
                       }}
                     />
                     <div className="flex items-center justify-between gap-3">
-                      <FieldHint>180 characters max, or grab one from the packs.</FieldHint>
+                    <FieldHint>180 characters max, or grab one from the packs.</FieldHint>
                       <span
                         className={cn(
                           "text-sm font-semibold",
@@ -411,7 +393,7 @@ export function RoomActivePhase({
                         Prompt packs
                       </FieldLabel>
                       <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">
-                        Search the built-in starters, filter by vibe, or let Relay throw you something weird.
+                        Search the starters, filter by vibe, or hit random.
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={onRandomPrompt}>

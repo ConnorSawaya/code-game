@@ -32,6 +32,9 @@ export function MonacoCodeEditor({
   notesLines,
   settingsLines,
   toolsLines,
+  panel,
+  panelPosition = "bottom",
+  panelClassName,
 }: {
   value: string;
   language: CodeLanguage;
@@ -44,6 +47,9 @@ export function MonacoCodeEditor({
   notesLines?: string[];
   settingsLines?: string[];
   toolsLines?: string[];
+  panel?: ReactNode;
+  panelPosition?: "right" | "bottom";
+  panelClassName?: string;
 }) {
   const fileName = title ?? getEditorFilename(language);
   const workspacePath = getEditorWorkspacePath(language);
@@ -58,6 +64,9 @@ export function MonacoCodeEditor({
       notesLines={notesLines}
       settingsLines={settingsLines}
       toolsLines={toolsLines}
+      panel={panel}
+      panelPosition={panelPosition}
+      panelClassName={panelClassName}
       statusLeft={
         <>
           <span>{readOnly ? "VIEW" : "EDIT"}</span>

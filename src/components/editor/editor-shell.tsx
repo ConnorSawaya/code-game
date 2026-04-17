@@ -97,6 +97,9 @@ export function EditorShell({
   settingsLines,
   toolsLines,
   searchItems,
+  panel,
+  panelPosition = "bottom",
+  panelClassName,
   className,
 }: {
   title: string;
@@ -113,6 +116,9 @@ export function EditorShell({
   settingsLines?: string[];
   toolsLines?: string[];
   searchItems?: string[];
+  panel?: ReactNode;
+  panelPosition?: "right" | "bottom";
+  panelClassName?: string;
   className?: string;
 }) {
   const [activePane, setActivePane] = useState<RailPaneId>("explorer");
@@ -432,7 +438,27 @@ export function EditorShell({
           </div>
           <div className="min-h-0 min-w-0">
             {activeDocument === "editor" ? (
-              children
+              panel ? (
+                <div
+                  className={cn(
+                    "grid min-h-0 min-w-0",
+                    panelPosition === "right" && "xl:grid-cols-[minmax(0,1fr)_340px]",
+                  )}
+                >
+                  <div className="min-w-0">{children}</div>
+                  <div
+                    className={cn(
+                      "min-h-0 min-w-0 border-t border-[#2d2d30] bg-[#111317]",
+                      panelPosition === "right" && "xl:border-l xl:border-t-0",
+                      panelClassName,
+                    )}
+                  >
+                    {panel}
+                  </div>
+                </div>
+              ) : (
+                children
+              )
             ) : activeDocument === "settings" ? (
               <div className="grid gap-3 bg-[#1e1e1e] px-5 py-4 font-mono text-[13px] leading-7 text-[#c9d1d9]">
                 <p className="text-[#4ec9b0]">{`// ${settingsTitle}`}</p>

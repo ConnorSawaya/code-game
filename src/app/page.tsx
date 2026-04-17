@@ -72,13 +72,51 @@ function HeroWorkbench() {
     <EditorShell
       title="relay/demo-room"
       tabLabel="enemySpawner.ts"
+      panelPosition="right"
       treeItems={[
-        { label: "relay-room", depth: 0 },
-        { label: "src", depth: 1 },
-        { label: "enemySpawner.ts", depth: 2, active: true },
-        { label: "playerController.js", depth: 2 },
-        { label: "README.md", depth: 1 },
+        { label: "relay-room", depth: 0, kind: "folder" },
+        { label: "src", depth: 1, kind: "folder" },
+        { label: "enemySpawner.ts", depth: 2, active: true, kind: "file" },
+        { label: "playerController.js", depth: 2, kind: "file" },
+        { label: "README.md", depth: 1, kind: "file", documentId: "notes" },
       ]}
+      panel={
+        <div className="grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] bg-[#111317]">
+          <div className="border-b border-[#2d2d30] px-4 py-3">
+            <p className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
+              Prompt
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[#e6edf3]">
+              Boss fight hates campers.
+            </p>
+          </div>
+          <div className="border-b border-[#2d2d30] px-4 py-3">
+            <p className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
+              Passes on
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[#c9d1d9]">
+              Boss gets meaner if you stop moving.
+            </p>
+          </div>
+          <div className="min-h-0">
+            <div className="flex items-center justify-between border-b border-[#2d2d30] bg-[#252526] px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
+              <span>Run / Output</span>
+              <span>console</span>
+            </div>
+            <div className="space-y-2 overflow-auto bg-[#0f1115] px-4 py-4 font-mono text-[12px] leading-6 text-[#c9d1d9]">
+              <p>
+                <span className="text-[#8b949e]">log</span> warning: KEEP MOVING
+              </p>
+              <p>
+                <span className="text-[#8b949e]">log</span> adds spawned x3
+              </p>
+              <p>
+                <span className="text-[#8b949e]">log</span> boss phase: overdrive
+              </p>
+            </div>
+          </div>
+        </div>
+      }
       footer={
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="font-mono text-[0.72rem] uppercase tracking-[0.14em] text-[#8b949e]">
@@ -103,44 +141,116 @@ function HeroWorkbench() {
         </>
       }
     >
-      <div className="grid gap-4 bg-[#1e1e1e] p-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+      <div className="bg-[#1e1e1e] p-4">
         <div className="rounded-[10px] border border-[#2d2d30] bg-[#1e1e1e]">
           <div className="grid grid-cols-[40px_minmax(0,1fr)] font-mono text-[13px] leading-7">
             {[
-              "const mood = rage > 0.7 ? 'overdrive' : 'hold';",
-              "hud.flash(mood);",
-              "spawnWave(mood === 'overdrive' ? 3 : 1);",
-              "",
-              "if (playerIsCamping) {",
-              "  boss.taunt('move or perish');",
-              "}",
+              {
+                id: "boss-mood",
+                content: (
+                  <>
+                <span className="text-[#569cd6]">const</span>{" "}
+                <span className="text-[#9cdcfe]">bossMood</span>{" "}
+                <span className="text-[#d4d4d4]">=</span>{" "}
+                <span className="text-[#9cdcfe]">player</span>
+                <span className="text-[#d4d4d4]">.</span>
+                <span className="text-[#dcdCAA]">speed</span>{" "}
+                <span className="text-[#d4d4d4]">&lt;</span>{" "}
+                <span className="text-[#b5cea8]">0.2</span>{" "}
+                <span className="text-[#d4d4d4]">?</span>{" "}
+                <span className="text-[#ce9178]">&quot;offended&quot;</span>{" "}
+                <span className="text-[#d4d4d4]">:</span>{" "}
+                <span className="text-[#ce9178]">&quot;locked-in&quot;</span>
+                <span className="text-[#d4d4d4]">;</span>
+                  </>
+                ),
+              },
+              {
+                id: "warning",
+                content: (
+                  <>
+                <span className="text-[#9cdcfe]">arena</span>
+                <span className="text-[#d4d4d4]">.</span>
+                <span className="text-[#dcdCAA]">flashWarning</span>
+                <span className="text-[#d4d4d4]">(</span>
+                <span className="text-[#9cdcfe]">bossMood</span>{" "}
+                <span className="text-[#d4d4d4]">===</span>{" "}
+                <span className="text-[#ce9178]">&quot;offended&quot;</span>{" "}
+                <span className="text-[#d4d4d4]">?</span>{" "}
+                <span className="text-[#ce9178]">&quot;KEEP MOVING&quot;</span>{" "}
+                <span className="text-[#d4d4d4]">:</span>{" "}
+                <span className="text-[#ce9178]">&quot;DODGE&quot;</span>
+                <span className="text-[#d4d4d4]">);</span>
+                  </>
+                ),
+              },
+              {
+                id: "if-open",
+                content: (
+                  <>
+                <span className="text-[#569cd6]">if</span>{" "}
+                <span className="text-[#d4d4d4]">(</span>
+                <span className="text-[#9cdcfe]">bossMood</span>{" "}
+                <span className="text-[#d4d4d4]">===</span>{" "}
+                <span className="text-[#ce9178]">&quot;offended&quot;</span>
+                <span className="text-[#d4d4d4]">) {"{"}</span>
+                  </>
+                ),
+              },
+              {
+                id: "spawn-adds",
+                content: (
+                  <>
+                <span className="text-[#9cdcfe]">spawnAdds</span>
+                <span className="text-[#d4d4d4]">(</span>
+                <span className="text-[#b5cea8]">3</span>
+                <span className="text-[#d4d4d4]">);</span>
+                  </>
+                ),
+              },
+              {
+                id: "phase-step",
+                content: (
+                  <>
+                <span className="text-[#9cdcfe]">boss</span>
+                <span className="text-[#d4d4d4]">.</span>
+                <span className="text-[#9cdcfe]">phase</span>{" "}
+                <span className="text-[#d4d4d4]">+=</span>{" "}
+                <span className="text-[#b5cea8]">1</span>
+                <span className="text-[#d4d4d4]">;</span>
+                  </>
+                ),
+              },
+              {
+                id: "if-close",
+                content: <span className="text-[#d4d4d4]">{"}"}</span>,
+              },
+              {
+                id: "console",
+                content: (
+                  <>
+                <span className="text-[#9cdcfe]">console</span>
+                <span className="text-[#d4d4d4]">.</span>
+                <span className="text-[#dcdCAA]">log</span>
+                <span className="text-[#d4d4d4]">(</span>
+                <span className="text-[#ce9178]">&quot;phase&quot;</span>
+                <span className="text-[#d4d4d4]">,</span>{" "}
+                <span className="text-[#9cdcfe]">boss</span>
+                <span className="text-[#d4d4d4]">.</span>
+                <span className="text-[#9cdcfe]">phase</span>
+                <span className="text-[#d4d4d4]">);</span>
+                  </>
+                ),
+              },
             ].map((line, index) => (
-              <div key={index} className="contents">
+              <div key={line.id} className="contents">
                 <div className="border-r border-[#2d2d30] pr-3 text-right text-[#6e7681]">
                   {index + 1}
                 </div>
-                <div className="overflow-x-auto pl-4 text-[#d4d4d4]">{line || " "}</div>
+                <div className="overflow-x-auto pl-4 text-[#d4d4d4]">{line.content}</div>
               </div>
             ))}
           </div>
-        </div>
-        <div className="space-y-3">
-            <div className="rounded-[10px] border border-[#2d2d30] bg-[#181818] p-3">
-              <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[#8b949e]">
-                Current chain
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[#e6edf3]">
-                &quot;Build a boss fight that gets offended when the player stands still.&quot;
-              </p>
-            </div>
-            <div className="rounded-[10px] border border-[#2d2d30] bg-[#181818] p-3">
-              <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[#8b949e]">
-                Next player sees
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[#c9d1d9]">
-                &quot;It escalates the encounter and taunts anyone who stops moving.&quot;
-              </p>
-            </div>
         </div>
       </div>
     </EditorShell>
@@ -165,9 +275,8 @@ export default function HomePage() {
                 Pass the code. Ship the chaos.
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-[color:var(--color-text-soft)]">
-                Relay is the party game where each dev mutates the last step. Join a room,
-                write code or describe what you think it does, then watch the final build go
-                gloriously off the rails.
+                Join a room, inherit the last step, and either code it or describe it.
+                By reveal, the whole thing has mutated into something nobody meant.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">

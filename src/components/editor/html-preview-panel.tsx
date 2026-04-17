@@ -202,12 +202,14 @@ export function HtmlPreviewPanel({
   className,
   height = 300,
   autoRun = true,
+  embedded = false,
 }: {
   snippet: string;
   language?: CodeLanguage;
   className?: string;
   height?: number;
   autoRun?: boolean;
+  embedded?: boolean;
 }) {
   const [activeView, setActiveView] = useState<RuntimeView>("preview");
   const [manualRun, setManualRun] = useState(() => ({
@@ -224,7 +226,9 @@ export function HtmlPreviewPanel({
         ? "JavaScript sandbox"
         : language === "typescript"
           ? "TypeScript sandbox"
-          : "HTML / CSS / JS sandbox",
+          : language === "python"
+            ? "Python sandbox"
+            : "HTML / CSS / JS sandbox",
   }));
   const effectiveSnippet = autoRun ? snippet : manualRun.snippet;
   const effectiveLanguage = autoRun ? language : manualRun.language;
@@ -260,11 +264,18 @@ export function HtmlPreviewPanel({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[18px] border border-[#2d2d30] bg-[#111317] shadow-[var(--shadow-panel)]",
+        embedded
+          ? "overflow-hidden bg-[#111317]"
+          : "overflow-hidden rounded-[18px] border border-[#2d2d30] bg-[#111317] shadow-[var(--shadow-panel)]",
         className,
       )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d2d30] bg-[#161b22] px-4 py-3">
+      <div
+        className={cn(
+          "flex flex-wrap items-center justify-between gap-3 border-b border-[#2d2d30] px-4 py-2.5",
+          embedded ? "bg-[#252526]" : "bg-[#161b22]",
+        )}
+      >
         <div className="flex items-center gap-2 text-sm font-semibold text-[#e6edf3]">
           <MonitorPlay className="h-4 w-4 text-[#1890f1]" />
           Run / Output
@@ -288,10 +299,16 @@ export function HtmlPreviewPanel({
                 key={view}
                 type="button"
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-[9px] border px-3 py-1.5 font-mono text-[0.68rem] uppercase tracking-[0.14em] transition",
+                  "inline-flex items-center gap-2 border px-3 py-1.5 font-mono text-[0.68rem] uppercase tracking-[0.14em] transition",
+                  embedded && "rounded-[6px]",
+                  !embedded && "rounded-[9px]",
                   activeView === view
-                    ? "border-[#264f78] bg-[#0b2538] text-[#e6edf3]"
-                    : "border-[#2d2d30] bg-[#111317] text-[#9da7b3] hover:text-[#e6edf3]",
+                    ? embedded
+                      ? "border-[#2d2d30] bg-[#1e1e1e] text-[#e6edf3]"
+                      : "border-[#264f78] bg-[#0b2538] text-[#e6edf3]"
+                    : embedded
+                      ? "border-[#2d2d30] bg-[#2d2d2d] text-[#9da7b3] hover:text-[#e6edf3]"
+                      : "border-[#2d2d30] bg-[#111317] text-[#9da7b3] hover:text-[#e6edf3]",
                 )}
                 onClick={() => setActiveView(view)}
               >
@@ -302,7 +319,10 @@ export function HtmlPreviewPanel({
           })}
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-[9px] border border-[#2d2d30] bg-[#0f1720] px-3 py-1.5 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#e6edf3] transition hover:border-[#1890f1]"
+            className={cn(
+              "inline-flex items-center gap-2 border border-[#2d2d30] px-3 py-1.5 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#e6edf3] transition hover:border-[#1890f1]",
+              embedded ? "rounded-[6px] bg-[#1f2937]" : "rounded-[9px] bg-[#0f1720]",
+            )}
             onClick={() => {
               setManualRun((current) => ({
                 snippet,
@@ -316,7 +336,12 @@ export function HtmlPreviewPanel({
           </button>
         </div>
       </div>
-      <div className="flex items-center justify-between border-b border-[#2d2d30] bg-[#111317] px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
+      <div
+        className={cn(
+          "flex items-center justify-between border-b border-[#2d2d30] px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]",
+          embedded ? "bg-[#1e1e1e]" : "bg-[#111317]",
+        )}
+      >
         <span>{preparedPreview.runtimeLabel}</span>
         <span>{preparing ? "preparing run" : autoRun ? "live preview" : `run ${manualRun.count}`}</span>
       </div>
