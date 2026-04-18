@@ -13,7 +13,24 @@ import { MonacoCodeEditor } from "@/components/editor/monaco-code-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { HandoffStrip } from "@/components/ui/handoff-strip";
 import { cn } from "@/lib/utils";
+
+function getRoomPhaseIndex(snapshot: RoomSnapshot) {
+  if (snapshot.status === "lobby" || !snapshot.game) {
+    return 0;
+  }
+
+  if (snapshot.game.phase === "reveal" || snapshot.game.phase === "summary") {
+    return 3;
+  }
+
+  if (snapshot.game.phase === "description") {
+    return 2;
+  }
+
+  return 1;
+}
 
 export function ReadonlyCode({
   value,
@@ -96,7 +113,7 @@ export function RoomHeader({
 }) {
   return (
     <Card className="overflow-hidden p-0">
-      <div className="hero-grid relative overflow-hidden px-5 py-5 sm:px-6 sm:py-6">
+      <div className="hero-grid relay-ambient relative overflow-hidden px-5 py-5 sm:px-6 sm:py-6">
         <div className="relative space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{snapshot.code}</Badge>
@@ -116,8 +133,8 @@ export function RoomHeader({
               </Badge>
             ) : null}
           </div>
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
-            <div className="space-y-3">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
+            <div className="space-y-4">
               <h1 className="font-display text-3xl tracking-[-0.05em] text-[color:var(--color-text-strong)] sm:text-[2.6rem]">
                 {snapshot.roomName}
               </h1>
@@ -131,7 +148,7 @@ export function RoomHeader({
               <div className="flex flex-wrap gap-2 pt-1">
                 <div className="surface-pill inline-flex items-center gap-2 rounded-[12px] px-3 py-2">
                   <span className="label-mono text-[color:var(--color-text-muted)]">code</span>
-                  <span className="font-mono text-sm font-semibold text-[color:var(--color-text-strong)]">
+                  <span className="font-mono text-base font-semibold uppercase tracking-[0.16em] text-[color:var(--color-text-strong)]">
                     {snapshot.code}
                   </span>
                 </div>
@@ -148,18 +165,44 @@ export function RoomHeader({
                   </span>
                 </div>
               </div>
+              <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
+                <HandoffStrip
+                  items={[
+                    { label: "Lobby", hint: "Room gets set." },
+                    { label: "Build", hint: "Someone writes the next move." },
+                    { label: "Pass", hint: "Another dev misreads it." },
+                    { label: "Reveal", hint: "The whole chain opens up." },
+                  ]}
+                  activeIndex={getRoomPhaseIndex(snapshot)}
+                />
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 xl:justify-end">
-              <Button variant="secondary" onClick={onCopyCode}>
-                <Copy className="h-4 w-4" />
-                Copy room code
-              </Button>
-              {snapshot.game?.replaySlug ? (
-                <Button variant="ghost" onClick={onCopyReplay}>
+            <div className="stack-panel space-y-4 px-4 py-4">
+              <div>
+                <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+                  Room pressure
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-soft)]">
+                  {snapshot.status === "lobby"
+                    ? "Get the roster ready, lock the vibe, and kick it off."
+                    : snapshot.game?.phase === "reveal" || snapshot.game?.phase === "summary"
+                      ? "Damage report is open. Pass the replay around once the room picks favorites."
+                      : "The baton is moving. Every player only sees one step at a time."}
+                </p>
+              </div>
+              <div className="relay-divider" />
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" onClick={onCopyCode}>
                   <Copy className="h-4 w-4" />
-                  Copy replay link
+                  Copy room code
                 </Button>
-              ) : null}
+                {snapshot.game?.replaySlug ? (
+                  <Button variant="ghost" onClick={onCopyReplay}>
+                    <Copy className="h-4 w-4" />
+                    Copy replay link
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>

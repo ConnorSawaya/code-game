@@ -8,6 +8,7 @@ import { useDemoMode } from "@/components/providers/demo-mode-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { HandoffStrip } from "@/components/ui/handoff-strip";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -16,6 +17,30 @@ import { usePersistedNickname } from "@/features/auth/use-persisted-nickname";
 import { postJson } from "@/lib/client-api";
 import { toast } from "sonner";
 import { getSkillModeConfig } from "@/features/game/logic";
+
+function getRoomFlowIndex(status: PublicRoomSummary["status"]) {
+  switch (status) {
+    case "lobby":
+      return 0;
+    case "reveal":
+      return 3;
+    case "live":
+    default:
+      return 2;
+  }
+}
+
+function getRoomStateTone(status: PublicRoomSummary["status"]) {
+  switch (status) {
+    case "lobby":
+      return "border-[rgba(24,144,241,0.28)] bg-[rgba(24,144,241,0.12)] text-[#78bfff]";
+    case "reveal":
+      return "border-[rgba(210,153,34,0.35)] bg-[rgba(210,153,34,0.12)] text-[#f4d27d]";
+    case "live":
+    default:
+      return "border-[rgba(46,160,67,0.35)] bg-[rgba(46,160,67,0.12)] text-[#9fddb1]";
+  }
+}
 
 export function PublicRoomsBoard({
   rooms,
@@ -108,23 +133,47 @@ export function PublicRoomsBoard({
           ) : null}
 
           {filteredRooms.map((room) => (
-            <div key={room.id} className="stack-panel overflow-hidden">
+            <div key={room.id} className="stack-panel relay-ambient overflow-hidden">
               <div className="grid gap-4 px-5 py-5 lg:grid-cols-[1fr_auto] lg:items-center">
                 <div className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge>{room.code}</Badge>
-                    <Badge>{getSkillModeConfig(room.skillMode).label}</Badge>
-                    <Badge>{room.status}</Badge>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-[1.6rem] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-text-strong)] sm:text-[1.9rem]">
+                        {room.code}
+                      </p>
+                      <p className="mt-2 text-base font-semibold text-[color:var(--color-text-strong)]">
+                        {room.hostNickname}&apos;s room
+                      </p>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[0.68rem] uppercase tracking-[0.14em] ${getRoomStateTone(room.status)}`}
+                    >
+                      <span className="status-dot bg-current" />
+                      {room.status}
+                    </span>
                   </div>
-                  <div>
-                    <CardTitle>{room.hostNickname}&apos;s room</CardTitle>
-                    <CardDescription className="mt-2">
-                      {room.status === "lobby"
-                        ? "Open lobby."
-                        : room.status === "live"
-                          ? "Live now."
-                          : "Reveal in progress."}
-                    </CardDescription>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge>{getSkillModeConfig(room.skillMode).label}</Badge>
+                    <Badge>{room.id.startsWith("demo-") ? "Demo flow" : "Public room"}</Badge>
+                  </div>
+                  <CardDescription className="max-w-2xl">
+                    {room.status === "lobby"
+                      ? "Lobby is open and waiting for the room to lock in."
+                      : room.status === "live"
+                        ? "The baton is already moving. Join if there is still a seat or watch it drift."
+                        : "The chain is open. Good time to watch the damage report."}
+                  </CardDescription>
+                  <div className="rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-3">
+                    <HandoffStrip
+                      items={[
+                        { label: "Lobby" },
+                        { label: "Code" },
+                        { label: "Pass" },
+                        { label: "Reveal" },
+                      ]}
+                      activeIndex={getRoomFlowIndex(room.status)}
+                      compact
+                    />
                   </div>
                   <div className="flex flex-wrap gap-3 text-sm text-[color:var(--color-text-soft)]">
                     <span className="inline-flex items-center gap-2">
@@ -139,6 +188,11 @@ export function PublicRoomsBoard({
                         ? "testing flow"
                         : `${room.spectatorCount} spectating`}
                     </span>
+                    {!room.id.startsWith("demo-") ? (
+                      <span className="font-mono text-[0.72rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                        {room.playerCount}/{room.playerCount + room.seatsOpen} seats filled
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 lg:min-w-[180px]">

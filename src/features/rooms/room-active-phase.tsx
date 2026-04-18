@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Field, FieldHint, FieldLabel } from "@/components/ui/field";
+import { HandoffStrip } from "@/components/ui/handoff-strip";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Textarea } from "@/components/ui/textarea";
@@ -207,6 +208,29 @@ export function RoomActivePhase({
               {taskPanelHint ? (
                 <p className="text-sm text-[color:var(--color-text-muted)]">{taskPanelHint}</p>
               ) : null}
+            </div>
+            <div className="rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-3">
+              <HandoffStrip
+                items={[
+                  {
+                    label: task.previousStep.stepType === "code" ? "Received code" : "Received prompt",
+                    hint: "This is the only step you can see.",
+                  },
+                  {
+                    label: task.expectedStepType === "code" ? "Build" : "Describe",
+                    hint:
+                      task.expectedStepType === "code"
+                        ? "Write the next move."
+                        : "Translate what it seems to do.",
+                  },
+                  {
+                    label: "Pass",
+                    hint: "Lock it in and hand it forward.",
+                  },
+                ]}
+                activeIndex={1}
+                compact
+              />
             </div>
             {task.previousStep.stepType === "code" ? (
               <ReadonlyCode

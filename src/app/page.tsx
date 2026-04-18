@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { EditorShell } from "@/components/editor/editor-shell";
 import { useDemoMode } from "@/components/providers/demo-mode-provider";
+import { HandoffStrip } from "@/components/ui/handoff-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -66,6 +67,12 @@ const useCases = [
 ];
 
 const demoRooms = ["boss-fight-jam", "shader-chaos", "late-night-refactor", "cursed-platformer"];
+const heroFlow = [
+  { label: "Prompt", hint: "Boss fight hates campers." },
+  { label: "Code", hint: "The boss escalates if you stop moving." },
+  { label: "Describe", hint: "Now somebody has to explain that clearly." },
+  { label: "Reveal", hint: "By the end it barely resembles the opener." },
+];
 
 function HeroWorkbench() {
   return (
@@ -84,13 +91,21 @@ function HeroWorkbench() {
         <div className="grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] bg-[#111317]">
           <div className="border-b border-[#2d2d30] px-4 py-3">
             <p className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
-              Prompt
+              Handoff live
             </p>
-            <p className="mt-2 text-sm leading-6 text-[#e6edf3]">
-              Boss fight hates campers.
-            </p>
+            <div className="mt-3">
+              <HandoffStrip items={heroFlow} activeIndex={2} orientation="vertical" />
+            </div>
           </div>
-          <div className="border-b border-[#2d2d30] px-4 py-3">
+          <div className="grid gap-3 border-b border-[#2d2d30] px-4 py-3">
+            <div>
+              <p className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
+                Received
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[#e6edf3]">
+                Boss fight hates campers.
+              </p>
+            </div>
             <p className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
               Passes on
             </p>
@@ -262,47 +277,77 @@ export default function HomePage() {
 
   return (
     <div className="section-grid pb-8">
-      <section className="hero-grid relative overflow-hidden rounded-[22px] border border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(13,17,23,0.98),rgba(11,16,21,0.98))] p-6 shadow-[var(--shadow-panel)] sm:p-8">
+      <section className="hero-grid relay-ambient relative overflow-hidden rounded-[22px] border border-[color:var(--color-border)] bg-[linear-gradient(180deg,rgba(13,17,23,0.98),rgba(11,16,21,0.98))] p-6 shadow-[var(--shadow-panel)] sm:p-8">
         <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent)]" />
-        <div className="grid gap-8 xl:grid-cols-[0.95fr_1.05fr] xl:items-center">
-          <div className="space-y-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge>Multiplayer code telephone</Badge>
-              {demoMode ? <Badge>Demo mode unlocked</Badge> : null}
-            </div>
-            <div className="space-y-4">
-              <h1 className="max-w-[11ch] text-balance font-display text-5xl font-semibold tracking-[-0.07em] text-[color:var(--color-text-strong)] sm:text-6xl sm:leading-[0.95]">
-                Pass the code. Ship the chaos.
-              </h1>
-              <p className="max-w-2xl text-lg leading-8 text-[color:var(--color-text-soft)]">
-                Join a room, inherit the last step, and either code it or describe it.
-                By reveal, the whole thing has mutated into something nobody meant.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button size="lg" onClick={openDialog}>
-                Try Demo
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Link href="#how-it-works">
-                <Button variant="secondary" size="lg">
-                  See How It Works
+        <div className="grid gap-8 xl:grid-cols-[0.9fr_1.1fr] xl:items-start">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge>Multiplayer code telephone</Badge>
+                {demoMode ? <Badge>Demo mode unlocked</Badge> : null}
+              </div>
+              <div className="space-y-4">
+                <p className="font-mono text-[0.72rem] uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
+                  One prompt enters. Nobody ships the same thing out.
+                </p>
+                <h1 className="max-w-[10.5ch] text-balance font-display text-5xl font-semibold tracking-[-0.07em] text-[color:var(--color-text-strong)] sm:text-6xl sm:leading-[0.94]">
+                  Pass the code. Ship the chaos.
+                </h1>
+                <p className="max-w-2xl text-lg leading-8 text-[color:var(--color-text-soft)]">
+                  Join a room, inherit the last step, and either code it or describe it.
+                  By reveal, the whole thing has drifted into something nobody planned.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button size="lg" onClick={openDialog}>
+                  Try Demo
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
-              </Link>
+                <Link href="#how-it-works">
+                  <Button variant="secondary" size="lg">
+                    See How It Works
+                  </Button>
+                </Link>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="surface-pill rounded-full px-3 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]">
+                  3-12 players
+                </span>
+                <span className="surface-pill rounded-full px-3 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]">
+                  HTML / JS / TS / Py
+                </span>
+                <span className="surface-pill rounded-full px-3 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]">
+                  600+ prompts
+                </span>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="surface-pill rounded-full px-3 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]">
-                3-12 players
-              </span>
-              <span className="surface-pill rounded-full px-3 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]">
-                HTML / JS / TS / Py
-              </span>
-              <span className="surface-pill rounded-full px-3 py-2 font-mono text-[0.74rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]">
-                600+ prompts
-              </span>
+            <div className="hidden lg:block">
+              <div className="stack-panel relay-ambient space-y-4 px-4 py-4">
+                <div>
+                  <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+                    Pressure column
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-soft)]">
+                    Prompt at the top. Handoff in the middle. Damage report at the bottom.
+                  </p>
+                </div>
+                <div className="relay-divider" />
+                <HandoffStrip items={heroFlow} activeIndex={2} orientation="vertical" />
+                <div className="relay-divider" />
+                <div className="space-y-1">
+                  <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+                    Tonight
+                  </p>
+                  <p className="text-sm font-medium text-[color:var(--color-text-strong)]">
+                    Room BOSS1 is already drifting.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-          <HeroWorkbench />
+          <div className="xl:translate-y-4">
+            <HeroWorkbench />
+          </div>
         </div>
       </section>
 
@@ -366,7 +411,7 @@ export default function HomePage() {
             })}
           </div>
         </Card>
-        <Card className="space-y-5">
+        <Card className="space-y-5 relay-ambient">
           <div className="flex items-center justify-between">
             <div>
               <Badge>Built For</Badge>
@@ -376,6 +421,9 @@ export default function HomePage() {
               </CardDescription>
             </div>
             <Gamepad2 className="h-5 w-5 text-[color:var(--color-accent-hover)]" />
+          </div>
+          <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
+            <HandoffStrip items={heroFlow} activeIndex={3} compact />
           </div>
           <div className="flex flex-wrap gap-2">
             {useCases.map((useCase) => (
