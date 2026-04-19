@@ -51,7 +51,7 @@ export function RoomLobby({
           <Badge>Host Panel</Badge>
           <CardTitle className="mt-3">Room settings</CardTitle>
           <CardDescription className="mt-2">
-            Keep the setup tight, then launch.
+            Set it once, then launch.
           </CardDescription>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
@@ -171,9 +171,6 @@ export function RoomLobby({
         <div>
           <Badge>Round Profile</Badge>
           <CardTitle className="mt-3">Current limits</CardTitle>
-          <CardDescription className="mt-2">
-            Short rounds keep the room moving.
-          </CardDescription>
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="stack-panel px-4 py-4">
@@ -195,10 +192,9 @@ export function RoomLobby({
             <p className="mt-2 font-display text-3xl tracking-[-0.05em]">{skillConfig.charLimit}</p>
           </div>
         </div>
-        <div className="space-y-2 rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4 text-sm text-[color:var(--color-text-muted)]">
-          <p>Each player starts one chain.</p>
-          <p>Code and description alternate until reveal.</p>
-          <p>The selected language applies to that round code step.</p>
+        <div className="grid gap-2 rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4 text-sm text-[color:var(--color-text-muted)]">
+          <p>One chain per player.</p>
+          <p>Code, description, reveal.</p>
         </div>
         <div className="flex flex-wrap gap-2 pt-1">
           <Badge>{getSkillModeConfig(settingsDraft.skillMode).label}</Badge>

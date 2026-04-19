@@ -18,7 +18,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Field, FieldHint, FieldLabel } from "@/components/ui/field";
 import { HandoffStrip } from "@/components/ui/handoff-strip";
 import { Input } from "@/components/ui/input";
-import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SelectableChip } from "@/components/ui/chip";
 import { Textarea } from "@/components/ui/textarea";
 import { ReadonlyCode } from "@/features/rooms/room-shared";
 import { cn } from "@/lib/utils";
@@ -160,7 +160,7 @@ export function RoomActivePhase({
     <section
       className={cn(
         "grid gap-6",
-        isCodeTurn ? "grid-cols-1" : "2xl:grid-cols-[minmax(0,1fr)_300px]",
+        isCodeTurn ? "grid-cols-1" : "items-start 2xl:grid-cols-[minmax(0,1fr)_300px]",
       )}
     >
       <Card className={cn("min-w-0", isCodeTurn ? "space-y-4 p-4 sm:p-5" : "space-y-5")}>
@@ -256,24 +256,27 @@ export function RoomActivePhase({
                   language={task.language ?? "javascript"}
                   onChange={setDraft}
                   height={560}
+                  panelHeight={220}
+                  workspaceLabel={snapshot.code.toLowerCase()}
                   notesLines={editorNotes}
                   settingsLines={editorSettings}
                   toolsLines={[
-                    "Explorer follows the active file language.",
-                    "Run code, check output, then lock the snippet in.",
+                    "Open a file, run it, then lock the current code file in.",
+                    "Room settings change wrap, tabs, and minimap live.",
                     "Autosave keeps your current draft on this machine.",
                   ]}
-                  panel={
+                  panel={({ activeFile, canRun }) => (
                     <HtmlPreviewPanel
-                      snippet={draft}
-                      language={task.language ?? "html_css_js"}
+                      snippet={canRun ? activeFile.content : ""}
+                      language={canRun ? (task.language ?? "html_css_js") : null}
+                      fileLabel={activeFile.label}
                       autoRun={false}
                       height={220}
                       embedded
                     />
-                  }
+                  )}
                   panelPosition="bottom"
-                  footer={
+                  footer={({ activeFile, canRun }) => (
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <span
                         className={cn(
@@ -285,10 +288,12 @@ export function RoomActivePhase({
                         {codeMetrics?.charCount ?? 0}/{skillConfig.charLimit} chars
                       </span>
                       <span className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
-                        explorer / notes / settings / run / console
+                        {canRun
+                          ? `submit target / ${activeFile.label}`
+                          : `${activeFile.label} / no runtime`}
                       </span>
                     </div>
-                  }
+                  )}
                 />
                 <div className="flex flex-col gap-3 rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="space-y-2">
@@ -371,20 +376,37 @@ export function RoomActivePhase({
                 </div>
               </div>
             ) : (
-              <div className="grid gap-5 2xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)]">
                 <div className="space-y-4">
-                  <div className="stack-panel space-y-4 px-5 py-5">
-                    <div>
-                      <FieldLabel className="text-[color:var(--color-text-soft)]">
-                        Custom prompt
-                      </FieldLabel>
-                      <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">
-                        Start with a mechanic, app, toy, or tiny disaster.
-                      </p>
+                  <div className="stack-panel relay-ambient space-y-4 px-5 py-5">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge>Custom prompt</Badge>
+                        <Badge>Chain starter</Badge>
+                      </div>
+                      <div>
+                        <FieldLabel className="text-[color:var(--color-text-soft)]">
+                          Start the first bad idea
+                        </FieldLabel>
+                        <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">
+                          Keep it short. A mechanic, app, toy, or tiny disaster is enough.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-3">
+                      <HandoffStrip
+                        items={[
+                          { label: "Start", hint: "You seed the chain." },
+                          { label: "Build", hint: "Someone writes from it." },
+                          { label: "Pass", hint: "Meaning drifts fast." },
+                        ]}
+                        activeIndex={0}
+                        compact
+                      />
                     </div>
                     <Textarea
-                      minRows={6}
-                      className="min-h-[220px] text-base leading-8"
+                      minRows={7}
+                      className="min-h-[280px] text-base leading-8"
                       placeholder="Invent a starter idea for the chain."
                       value={draft}
                       onChange={(event) => {
@@ -392,8 +414,8 @@ export function RoomActivePhase({
                         setDraft(event.target.value);
                       }}
                     />
-                    <div className="flex items-center justify-between gap-3">
-                    <FieldHint>180 characters max, or grab one from the packs.</FieldHint>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <FieldHint>180 characters max. Short prompts break in funnier ways.</FieldHint>
                       <span
                         className={cn(
                           "text-sm font-semibold",
@@ -405,19 +427,23 @@ export function RoomActivePhase({
                         {Math.max(promptRemaining, 0)} left
                       </span>
                     </div>
+                    <Button fullWidth size="lg" onClick={onSubmit} disabled={isSubmitDisabled}>
+                      {submitting === "submit" ? "Submitting..." : "Start this chain"}
+                    </Button>
                   </div>
-                  <Button fullWidth size="lg" onClick={onSubmit} disabled={isSubmitDisabled}>
-                    {submitting === "submit" ? "Submitting..." : "Start this chain"}
-                  </Button>
                 </div>
-                <div className="stack-panel space-y-4 px-5 py-5">
-                  <div className="flex items-center justify-between gap-3">
+                <div className="stack-panel relay-ambient space-y-4 px-5 py-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <FieldLabel className="text-[color:var(--color-text-soft)]">
-                        Prompt packs
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge>Prompt packs</Badge>
+                        <Badge>{promptResults.length} matches</Badge>
+                      </div>
+                      <FieldLabel className="mt-3 text-[color:var(--color-text-soft)]">
+                        Grab a starter fast
                       </FieldLabel>
                       <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">
-                        Search the starters, filter by vibe, or hit random.
+                        Search the library, filter the vibe, or hit random and live with it.
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={onRandomPrompt}>
@@ -437,52 +463,77 @@ export function RoomActivePhase({
                       />
                     </div>
                   </Field>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <SegmentedControl
-                      value={promptDifficulty}
-                      onChange={setPromptDifficulty}
-                      options={[
+                  <div className="space-y-3">
+                    <FieldLabel>Difficulty</FieldLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {[
                         { value: "all", label: "All" },
                         { value: "beginner", label: "Beginner" },
                         { value: "intermediate", label: "Intermediate" },
                         { value: "advanced", label: "Advanced" },
                         { value: "chaos", label: "Chaos" },
-                      ]}
-                    />
-                    <SegmentedControl
-                      value={promptPack}
-                      onChange={setPromptPack}
-                      options={[
-                        { value: "all", label: "All packs" },
-                        ...promptPacks.map((pack) => ({
-                          value: pack.value,
-                          label: pack.label,
-                        })),
-                      ]}
-                    />
+                      ].map((option) => (
+                        <SelectableChip
+                          key={option.value}
+                          selected={promptDifficulty === option.value}
+                          label={option.label}
+                          onClick={() =>
+                            setPromptDifficulty(option.value as "all" | PromptRecord["difficulty"])
+                          }
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="max-h-[360px] space-y-2 overflow-auto pr-1">
-                    {promptResults.map((prompt) => (
-                      <button
-                        key={prompt.id}
-                        type="button"
-                        className={cn(
-                          "w-full rounded-[12px] border px-4 py-3 text-left transition",
-                          selectedPromptId === prompt.id
-                            ? "border-[rgba(0,122,204,0.65)] bg-[rgba(0,122,204,0.18)] text-[color:var(--color-text-strong)]"
-                            : "border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] text-[color:var(--color-text)] hover:border-[color:var(--color-border-strong)] hover:bg-[color:var(--color-bg-elevated)]",
-                        )}
-                        onClick={() => {
-                          setSelectedPromptId(prompt.id);
-                          setDraft(prompt.text);
-                        }}
-                      >
-                        <p className="text-sm leading-7">{prompt.text}</p>
-                        <p className="mt-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
-                          {prompt.packLabel} / {prompt.category}
-                        </p>
-                      </button>
-                    ))}
+                  <div className="space-y-3">
+                    <FieldLabel>Pack</FieldLabel>
+                    <div className="flex max-h-[116px] flex-wrap gap-2 overflow-auto pr-1">
+                      <SelectableChip
+                        selected={promptPack === "all"}
+                        label="All packs"
+                        onClick={() => setPromptPack("all")}
+                      />
+                      {promptPacks.map((pack) => (
+                        <SelectableChip
+                          key={pack.value}
+                          selected={promptPack === pack.value}
+                          label={pack.label}
+                          onClick={() => setPromptPack(pack.value)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="max-h-[430px] overflow-auto pr-1">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {promptResults.map((prompt) => (
+                        <button
+                          key={prompt.id}
+                          type="button"
+                          className={cn(
+                            "flex h-full flex-col justify-between rounded-[14px] border px-4 py-4 text-left transition",
+                            selectedPromptId === prompt.id
+                              ? "border-[rgba(0,122,204,0.65)] bg-[rgba(0,122,204,0.18)] text-[color:var(--color-text-strong)]"
+                              : "border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] text-[color:var(--color-text)] hover:border-[color:var(--color-border-strong)] hover:bg-[color:var(--color-bg-elevated)]",
+                          )}
+                          onClick={() => {
+                            setSelectedPromptId(prompt.id);
+                            setDraft(prompt.text);
+                          }}
+                        >
+                          <p className="text-sm leading-7">{prompt.text}</p>
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-[0.66rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                              {prompt.packLabel}
+                            </span>
+                            <span className="font-mono text-[0.66rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                              /
+                            </span>
+                            <span className="font-mono text-[0.66rem] uppercase tracking-[0.14em] text-[color:var(--color-text-muted)]">
+                              {prompt.category}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -498,7 +549,7 @@ export function RoomActivePhase({
       </Card>
 
       {!isCodeTurn ? (
-        <Card className="space-y-5">
+        <Card className={cn("space-y-5", snapshot.game?.phase === "prompt" && "xl:sticky xl:top-24")}>
           <CardTitle>Round board</CardTitle>
           <CardDescription>
             One visible step, one short turn, one chance to be understood.

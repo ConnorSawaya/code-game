@@ -8,12 +8,11 @@ import {
   type PropsWithChildren,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ShieldCheck, TestTube2, X } from "lucide-react";
+import { Rocket, TestTube2, X } from "lucide-react";
 import { postJson } from "@/lib/client-api";
 import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
-import { Field, FieldHint, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { FieldLabel } from "@/components/ui/field";
 import { toast } from "sonner";
 
 interface DemoModeContextValue {
@@ -22,7 +21,7 @@ interface DemoModeContextValue {
   unlockPending: boolean;
   openDialog: () => void;
   closeDialog: () => void;
-  unlockDemoMode: (password: string) => Promise<void>;
+  unlockDemoMode: () => Promise<void>;
   lockDemoMode: () => Promise<void>;
 }
 
@@ -35,7 +34,6 @@ export function DemoModeProvider({
   const [demoMode, setDemoMode] = useState(initialDemoMode);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [unlockPending, setUnlockPending] = useState(false);
-  const [password, setPassword] = useState("");
 
   const value = useMemo<DemoModeContextValue>(
     () => ({
@@ -44,13 +42,12 @@ export function DemoModeProvider({
       unlockPending,
       openDialog: () => setDialogOpen(true),
       closeDialog: () => setDialogOpen(false),
-      unlockDemoMode: async (nextPassword: string) => {
+      unlockDemoMode: async () => {
         try {
           setUnlockPending(true);
-          await postJson("/api/demo/unlock", { password: nextPassword });
+          await postJson("/api/demo/unlock", {});
           setDemoMode(true);
           setDialogOpen(false);
-          setPassword("");
           toast.success("Demo mode unlocked. Mock rooms and test controls are live.");
           window.location.reload();
         } catch (error) {
@@ -65,7 +62,6 @@ export function DemoModeProvider({
           await postJson("/api/demo/lock", {});
           setDemoMode(false);
           setDialogOpen(false);
-          setPassword("");
           toast.success("Demo mode locked.");
           window.location.reload();
         } catch (error) {
@@ -104,11 +100,11 @@ export function DemoModeProvider({
                   <div>
                     <FieldLabel>Demo / Testing Mode</FieldLabel>
                     <CardTitle className="mt-2 text-[1.55rem]">
-                      Unlock the mock rooms
+                      Enter demo mode
                     </CardTitle>
                     <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-muted)]">
-                      Temporary dev-only access. This unlocks demo rooms, fake replay data,
-                      and test controls for unfinished backend paths.
+                      This turns on the mock room path, replay fixtures, and testing controls
+                      for unfinished backend flows.
                     </p>
                   </div>
                 </div>
@@ -121,25 +117,16 @@ export function DemoModeProvider({
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <Field className="mt-5">
-                <FieldLabel>Password</FieldLabel>
-                <Input
-                  type="password"
-                  placeholder="Enter temporary demo password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                />
-                <FieldHint>
-                  This is intentionally temporary and easy to replace later.
-                </FieldHint>
-              </Field>
+              <div className="mt-5 rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-panel)] px-4 py-3 text-sm leading-6 text-[color:var(--color-text-muted)]">
+                Demo mode is local to this browser session. You can turn it back off anytime from the header.
+              </div>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Button
-                  onClick={() => void value.unlockDemoMode(password)}
-                  disabled={unlockPending || password.trim().length === 0}
+                  onClick={() => void value.unlockDemoMode()}
+                  disabled={unlockPending}
                 >
-                  <ShieldCheck className="h-4 w-4" />
-                  {unlockPending ? "Unlocking..." : "Unlock demo mode"}
+                  <Rocket className="h-4 w-4" />
+                  {unlockPending ? "Entering..." : "Enter demo mode"}
                 </Button>
                 <Button variant="secondary" onClick={() => setDialogOpen(false)}>
                   Cancel

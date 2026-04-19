@@ -8,7 +8,6 @@ import { useDemoMode } from "@/components/providers/demo-mode-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import { HandoffStrip } from "@/components/ui/handoff-strip";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -17,18 +16,6 @@ import { usePersistedNickname } from "@/features/auth/use-persisted-nickname";
 import { postJson } from "@/lib/client-api";
 import { toast } from "sonner";
 import { getSkillModeConfig } from "@/features/game/logic";
-
-function getRoomFlowIndex(status: PublicRoomSummary["status"]) {
-  switch (status) {
-    case "lobby":
-      return 0;
-    case "reveal":
-      return 3;
-    case "live":
-    default:
-      return 2;
-  }
-}
 
 function getRoomStateTone(status: PublicRoomSummary["status"]) {
   switch (status) {
@@ -89,9 +76,9 @@ export function PublicRoomsBoard({
         <Card className="space-y-5">
           <Badge>Public Rooms</Badge>
           <div>
-            <CardTitle>Browse the rooms already making noise.</CardTitle>
+            <CardTitle>Open rooms.</CardTitle>
             <CardDescription className="mt-2">
-              Join an open lobby or watch a live room. Keep the setup quick.
+              Join a lobby or watch one live.
             </CardDescription>
           </div>
           <Field>
@@ -158,23 +145,11 @@ export function PublicRoomsBoard({
                   </div>
                   <CardDescription className="max-w-2xl">
                     {room.status === "lobby"
-                      ? "Lobby is open and waiting for the room to lock in."
+                      ? "Open lobby."
                       : room.status === "live"
-                        ? "The baton is already moving. Join if there is still a seat or watch it drift."
-                        : "The chain is open. Good time to watch the damage report."}
+                        ? "Live now."
+                        : "Reveal in progress."}
                   </CardDescription>
-                  <div className="rounded-[14px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-3">
-                    <HandoffStrip
-                      items={[
-                        { label: "Lobby" },
-                        { label: "Code" },
-                        { label: "Pass" },
-                        { label: "Reveal" },
-                      ]}
-                      activeIndex={getRoomFlowIndex(room.status)}
-                      compact
-                    />
-                  </div>
                   <div className="flex flex-wrap gap-3 text-sm text-[color:var(--color-text-soft)]">
                     <span className="inline-flex items-center gap-2">
                       <Users className="h-4 w-4 text-[color:var(--color-accent-hover)]" />

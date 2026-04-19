@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bug, MonitorPlay, PlayCircle, TerminalSquare } from "lucide-react";
 import type { CodeLanguage } from "@/features/game/types";
 import { buildPreviewSrcDoc } from "@/features/game/editor";
+import { getLanguageLabel } from "@/features/game/logic";
 import { cn } from "@/lib/utils";
 
 type RuntimeView = "preview" | "console" | "problems";
@@ -12,6 +13,7 @@ type PreparedPreview = {
   srcDoc: string;
   problems: string[];
   runtimeLabel: string;
+  runnable: boolean;
 };
 
 function formatTypeScriptDiagnostic(
@@ -35,8 +37,19 @@ function formatTypeScriptDiagnostic(
 
 async function preparePreviewDocument(
   snippet: string,
-  language: CodeLanguage,
+  language: CodeLanguage | null,
+  fileLabel?: string,
 ): Promise<PreparedPreview> {
+  if (!language) {
+    return {
+      srcDoc:
+        "<!DOCTYPE html><html><body style=\"margin:0;display:grid;place-items:center;min-height:100%;background:#0f1115;color:#8b949e;font:14px system-ui,sans-serif;\">No runnable file selected.</body></html>",
+      problems: [],
+      runtimeLabel: fileLabel ? `${fileLabel} / no runtime` : "No runtime",
+      runnable: false,
+    };
+  }
+
   if (language === "typescript") {
     try {
       const ts = await import("typescript");
@@ -51,13 +64,15 @@ async function preparePreviewDocument(
       return {
         srcDoc: buildPreviewSrcDoc(result.outputText ?? "", "javascript"),
         problems: (result.diagnostics ?? []).map(formatTypeScriptDiagnostic),
-        runtimeLabel: "TypeScript sandbox",
+        runtimeLabel: `${getLanguageLabel(language)} runtime`,
+        runnable: true,
       };
     } catch {
       return {
         srcDoc: buildPreviewSrcDoc("", "javascript"),
         problems: ["TypeScript preview could not load the compiler for this run."],
-        runtimeLabel: "TypeScript sandbox",
+        runtimeLabel: `${getLanguageLabel(language)} runtime`,
+        runnable: true,
       };
     }
   }
@@ -66,15 +81,16 @@ async function preparePreviewDocument(
     return {
       srcDoc: buildPreviewSrcDoc(snippet, language),
       problems: [],
-      runtimeLabel: "Python sandbox",
+      runtimeLabel: `${getLanguageLabel(language)} runtime`,
+      runnable: true,
     };
   }
 
   return {
     srcDoc: buildPreviewSrcDoc(snippet, language),
     problems: [],
-    runtimeLabel:
-      language === "javascript" ? "JavaScript sandbox" : "HTML / CSS / JS sandbox",
+    runtimeLabel: `${getLanguageLabel(language)} runtime`,
+    runnable: true,
   };
 }
 
@@ -83,11 +99,15 @@ function RuntimeSession({
   srcDoc,
   height,
   staticProblems,
+  runtimeLabel,
+  runnable,
 }: {
   activeView: RuntimeView;
   srcDoc: string;
   height: number;
   staticProblems: string[];
+  runtimeLabel: string;
+  runnable: boolean;
 }) {
   const [consoleEntries, setConsoleEntries] = useState<
     Array<{ level: string; message: string }>
@@ -129,8 +149,8 @@ function RuntimeSession({
   return (
     <>
       <div className="flex items-center justify-between border-b border-[#2d2d30] bg-[#111317] px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#8b949e]">
-        <span>Browser sandbox</span>
-        <span>{runtimeReady ? "runtime ready" : "booting sandbox"}</span>
+        <span>{runtimeLabel}</span>
+        <span>{!runnable ? "inactive" : runtimeReady ? "runtime ready" : "booting runtime"}</span>
       </div>
       {activeView === "preview" ? (
         <iframe
@@ -145,9 +165,11 @@ function RuntimeSession({
           className="overflow-auto bg-[#0f1115] px-4 py-4 font-mono text-[12px] leading-6 text-[#c9d1d9]"
           style={{ height }}
         >
-          {consoleEntries.length === 0 ? (
+          {!runnable ? (
+            <p className="text-[#7d8590]">Select a runnable code file to see output here.</p>
+          ) : consoleEntries.length === 0 ? (
             <p className="text-[#7d8590]">
-              No console output yet. Run the snippet or interact with the preview.
+              No console output yet. Run the file or interact with the preview.
             </p>
           ) : (
             <div className="space-y-2">
@@ -168,7 +190,9 @@ function RuntimeSession({
           className="overflow-auto bg-[#0f1115] px-4 py-4 font-mono text-[12px] leading-6 text-[#c9d1d9]"
           style={{ height }}
         >
-          {staticProblems.length === 0 && runtimeErrors.length === 0 ? (
+          {!runnable ? (
+            <p className="text-[#8b949e]">No runtime diagnostics for this file.</p>
+          ) : staticProblems.length === 0 && runtimeErrors.length === 0 ? (
             <p className="text-[#8fbf8f]">No issues reported after the last run.</p>
           ) : (
             <div className="space-y-2">
@@ -199,13 +223,15 @@ function RuntimeSession({
 export function HtmlPreviewPanel({
   snippet,
   language = "html_css_js",
+  fileLabel,
   className,
   height = 300,
   autoRun = true,
   embedded = false,
 }: {
   snippet: string;
-  language?: CodeLanguage;
+  language?: CodeLanguage | null;
+  fileLabel?: string;
   className?: string;
   height?: number;
   autoRun?: boolean;
@@ -219,16 +245,10 @@ export function HtmlPreviewPanel({
   }));
   const [preparing, setPreparing] = useState(false);
   const [preparedPreview, setPreparedPreview] = useState<PreparedPreview>(() => ({
-    srcDoc: buildPreviewSrcDoc(snippet, language),
+    srcDoc: language ? buildPreviewSrcDoc(snippet, language) : buildPreviewSrcDoc(""),
     problems: [],
-    runtimeLabel:
-      language === "javascript"
-        ? "JavaScript sandbox"
-        : language === "typescript"
-          ? "TypeScript sandbox"
-          : language === "python"
-            ? "Python sandbox"
-            : "HTML / CSS / JS sandbox",
+    runtimeLabel: language ? `${getLanguageLabel(language)} runtime` : "No runtime",
+    runnable: Boolean(language),
   }));
   const effectiveSnippet = autoRun ? snippet : manualRun.snippet;
   const effectiveLanguage = autoRun ? language : manualRun.language;
@@ -239,7 +259,11 @@ export function HtmlPreviewPanel({
 
     const prepare = async () => {
       setPreparing(true);
-      const next = await preparePreviewDocument(effectiveSnippet, effectiveLanguage);
+      const next = await preparePreviewDocument(
+        effectiveSnippet,
+        effectiveLanguage,
+        fileLabel,
+      );
 
       if (!cancelled) {
         setPreparedPreview(next);
@@ -252,7 +276,7 @@ export function HtmlPreviewPanel({
     return () => {
       cancelled = true;
     };
-  }, [effectiveLanguage, effectiveRunCount, effectiveSnippet]);
+  }, [effectiveLanguage, effectiveRunCount, effectiveSnippet, fileLabel]);
 
   const sessionKey = useMemo(
     () => (autoRun ? `${language}:${snippet}` : `${manualRun.language}:${manualRun.count}`),
@@ -324,15 +348,23 @@ export function HtmlPreviewPanel({
               embedded ? "rounded-[6px] bg-[#1f2937]" : "rounded-[9px] bg-[#0f1720]",
             )}
             onClick={() => {
+              if (!preparedPreview.runnable) {
+                return;
+              }
               setManualRun((current) => ({
                 snippet,
                 language,
                 count: current.count + 1,
               }));
             }}
+            disabled={!preparedPreview.runnable}
           >
             <PlayCircle className="h-3.5 w-3.5 text-[#1890f1]" />
-            {hasPendingChanges ? "Run code" : "Run again"}
+            {!preparedPreview.runnable
+              ? "No runtime"
+              : hasPendingChanges
+                ? "Run code"
+                : "Run again"}
           </button>
         </div>
       </div>
@@ -351,6 +383,8 @@ export function HtmlPreviewPanel({
         srcDoc={preparedPreview.srcDoc}
         height={height}
         staticProblems={preparedPreview.problems}
+        runtimeLabel={preparedPreview.runtimeLabel}
+        runnable={preparedPreview.runnable}
       />
     </div>
   );

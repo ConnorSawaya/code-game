@@ -1,4 +1,3 @@
-export const DEMO_PASSWORD = "12345678";
 export const DEMO_COOKIE_NAME = "relay_demo_mode";
 export const DEMO_COOKIE_VALUE = "unlocked";
 export const DEMO_NICKNAME_COOKIE = "relay_nickname";

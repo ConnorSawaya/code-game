@@ -2,10 +2,29 @@ import type * as Monaco from "monaco-editor";
 import type { CodeLanguage } from "@/features/game/types";
 
 const RELAY_EDITOR_THEME = "relay-night";
+const SCRATCH_FILE_BASENAME = "scratch";
 
 let relayThemeRegistered = false;
 
-export function getMonacoLanguage(language: CodeLanguage) {
+export type RelayDocumentLanguage =
+  | CodeLanguage
+  | "json"
+  | "markdown"
+  | "plaintext";
+
+export interface RelayEditorPreferences {
+  wordWrap: "off" | "on";
+  minimap: boolean;
+  tabSize: 2 | 4;
+}
+
+export const DEFAULT_RELAY_EDITOR_PREFERENCES: RelayEditorPreferences = {
+  wordWrap: "off",
+  minimap: true,
+  tabSize: 2,
+};
+
+export function getMonacoLanguage(language: RelayDocumentLanguage) {
   switch (language) {
     case "typescript":
       return "typescript";
@@ -13,6 +32,12 @@ export function getMonacoLanguage(language: CodeLanguage) {
       return "python";
     case "javascript":
       return "javascript";
+    case "json":
+      return "json";
+    case "markdown":
+      return "markdown";
+    case "plaintext":
+      return "plaintext";
     case "html_css_js":
     default:
       return "html";
@@ -22,18 +47,18 @@ export function getMonacoLanguage(language: CodeLanguage) {
 export function getEditorFilename(language: CodeLanguage) {
   switch (language) {
     case "typescript":
-      return "enemySpawner.ts";
+      return "main.ts";
     case "python":
-      return "levelGen.py";
+      return "main.py";
     case "javascript":
-      return "playerController.js";
+      return "main.js";
     case "html_css_js":
     default:
       return "index.html";
   }
 }
 
-function getEditorSourceFolder(language: CodeLanguage) {
+export function getEditorSourceFolder(language: CodeLanguage) {
   switch (language) {
     case "python":
       return "game";
@@ -48,6 +73,75 @@ function getEditorSourceFolder(language: CodeLanguage) {
 
 export function getEditorWorkspacePath(language: CodeLanguage) {
   return `${getEditorSourceFolder(language)}/${getEditorFilename(language)}`;
+}
+
+export function getDocumentLanguageLabel(language: RelayDocumentLanguage) {
+  switch (language) {
+    case "html_css_js":
+      return "HTML / CSS / JS";
+    case "javascript":
+      return "JavaScript";
+    case "python":
+      return "Python";
+    case "typescript":
+      return "TypeScript";
+    case "json":
+      return "JSON";
+    case "markdown":
+      return "Markdown";
+    case "plaintext":
+    default:
+      return "Plain Text";
+  }
+}
+
+export function getEditorFileExtension(language: CodeLanguage) {
+  switch (language) {
+    case "typescript":
+      return "ts";
+    case "python":
+      return "py";
+    case "javascript":
+      return "js";
+    case "html_css_js":
+    default:
+      return "html";
+  }
+}
+
+export function getNextScratchFilename(
+  language: CodeLanguage,
+  existingNames: string[],
+) {
+  const extension = getEditorFileExtension(language);
+  let index = 1;
+
+  while (existingNames.includes(`${SCRATCH_FILE_BASENAME}-${index}.${extension}`)) {
+    index += 1;
+  }
+
+  return `${SCRATCH_FILE_BASENAME}-${index}.${extension}`;
+}
+
+export function normalizeCodeFilename(
+  rawName: string,
+  language: CodeLanguage,
+) {
+  const extension = getEditorFileExtension(language);
+  const sanitizedBase = rawName
+    .trim()
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  const fallbackBase = SCRATCH_FILE_BASENAME;
+  const safeName = sanitizedBase.length > 0 ? sanitizedBase : fallbackBase;
+
+  if (safeName.toLowerCase().endsWith(`.${extension}`)) {
+    return safeName;
+  }
+
+  return `${safeName}.${extension}`;
 }
 
 export function registerRelayMonacoTheme(monaco: typeof Monaco) {
@@ -105,7 +199,10 @@ export function registerRelayMonacoTheme(monaco: typeof Monaco) {
   relayThemeRegistered = true;
 }
 
-export function getMonacoEditorOptions(readOnly = false): Monaco.editor.IStandaloneEditorConstructionOptions {
+export function getMonacoEditorOptions(
+  readOnly = false,
+  preferences: RelayEditorPreferences = DEFAULT_RELAY_EDITOR_PREFERENCES,
+): Monaco.editor.IStandaloneEditorConstructionOptions {
   return {
     theme: RELAY_EDITOR_THEME,
     language: "plaintext",
@@ -113,7 +210,7 @@ export function getMonacoEditorOptions(readOnly = false): Monaco.editor.IStandal
     domReadOnly: readOnly,
     automaticLayout: true,
     minimap: {
-      enabled: true,
+      enabled: preferences.minimap,
       side: "right",
       renderCharacters: false,
       maxColumn: 80,
@@ -154,11 +251,11 @@ export function getMonacoEditorOptions(readOnly = false): Monaco.editor.IStandal
     overviewRulerBorder: false,
     contextmenu: true,
     fixedOverflowWidgets: true,
-    tabSize: 2,
+    tabSize: preferences.tabSize,
     insertSpaces: true,
     formatOnPaste: false,
     formatOnType: false,
-    wordWrap: "off",
+    wordWrap: preferences.wordWrap,
     wrappingIndent: "same",
     matchBrackets: "always",
     quickSuggestions: !readOnly,
@@ -176,35 +273,6 @@ export function getMonacoEditorOptions(readOnly = false): Monaco.editor.IStandal
     },
     cursorStyle: "line",
   };
-}
-
-export function getEditorTreeItems(language: CodeLanguage) {
-  const filename = getEditorFilename(language);
-  const sourceFolder = getEditorSourceFolder(language);
-
-  return [
-    { label: "relay-room", depth: 0, kind: "folder" as const },
-    { label: sourceFolder, depth: 1, kind: "folder" as const },
-    {
-      label: filename,
-      depth: 2,
-      active: true,
-      kind: "file" as const,
-      documentId: "editor" as const,
-    },
-    {
-      label: "README.md",
-      depth: 1,
-      kind: "file" as const,
-      documentId: "notes" as const,
-    },
-    {
-      label: "room.settings.json",
-      depth: 1,
-      kind: "file" as const,
-      documentId: "settings" as const,
-    },
-  ];
 }
 
 function buildRuntimeBridgeScript() {
@@ -287,7 +355,7 @@ export function buildPreviewSrcDoc(
   const trimmed = snippet.trim();
   const csp =
     language === "python"
-      ? "default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; font-src data: https:;"
+      ? "default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; font-src data: https:;"
       : "default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data: https:;";
   const bridgeScript = buildRuntimeBridgeScript();
   const previewMarkup = `
@@ -328,14 +396,15 @@ export function buildPreviewSrcDoc(
         relayPost({ type: "console", level, message: text.replace(/\\n$/, "") || text });
       };
       function builtinRead(filename) {
-        if (!Sk.builtinFiles || !Sk.builtinFiles["files"][filename]) {
+        if (!Sk.builtinFiles || !Sk.builtinFiles.files[filename]) {
           throw new Error("File not found: " + filename);
         }
-        return Sk.builtinFiles["files"][filename];
+        return Sk.builtinFiles.files[filename];
       }
       (async () => {
         relayOutput.textContent = "";
         try {
+          Sk.pre = "app";
           Sk.configure({
             output: (text) => pushLine(text, "log"),
             read: builtinRead,

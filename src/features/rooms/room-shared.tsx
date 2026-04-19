@@ -10,6 +10,7 @@ import {
 } from "@/features/game/logic";
 import { HtmlPreviewPanel } from "@/components/editor/html-preview-panel";
 import { MonacoCodeEditor } from "@/components/editor/monaco-code-editor";
+import { getDocumentLanguageLabel } from "@/features/game/editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -60,7 +61,7 @@ export function ReadonlyCode({
         height={height}
         notesLines={[
           "# Relay viewer notes",
-          `language: ${language}`,
+          `language: ${getDocumentLanguageLabel(language)}`,
           "// Read-only view. Use preview if this snippet supports the browser sandbox.",
         ]}
         settingsLines={[
@@ -140,10 +141,10 @@ export function RoomHeader({
               </h1>
               <p className="max-w-3xl text-sm leading-6 text-[color:var(--color-text-soft)] sm:text-base">
                 {snapshot.status === "lobby"
-                  ? "Set the room, watch the roster, and launch when everyone is ready."
+                  ? "Set the room and launch when everyone is ready."
                   : snapshot.game?.phase === "reveal"
-                    ? "The full chain is finally visible. React, favorite the best breaks, and pass the replay around."
-                    : "Players only see the previous step. The full chain stays hidden until reveal."}
+                    ? "Full chain is open. React, favorite, share the replay."
+                    : "Players only see the last step until reveal."}
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
                 <div className="surface-pill inline-flex items-center gap-2 rounded-[12px] px-3 py-2">
@@ -180,17 +181,16 @@ export function RoomHeader({
             <div className="stack-panel space-y-4 px-4 py-4">
               <div>
                 <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
-                  Room pressure
+                  Quick actions
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-soft)]">
                   {snapshot.status === "lobby"
-                    ? "Get the roster ready, lock the vibe, and kick it off."
+                    ? "Copy the code and start when the room is set."
                     : snapshot.game?.phase === "reveal" || snapshot.game?.phase === "summary"
-                      ? "Damage report is open. Pass the replay around once the room picks favorites."
-                      : "The baton is moving. Every player only sees one step at a time."}
+                      ? "Replay is ready to pass around."
+                      : "Copy the code or replay link without leaving the room."}
                 </p>
               </div>
-              <div className="relay-divider" />
               <div className="flex flex-wrap gap-2">
                 <Button variant="secondary" onClick={onCopyCode}>
                   <Copy className="h-4 w-4" />

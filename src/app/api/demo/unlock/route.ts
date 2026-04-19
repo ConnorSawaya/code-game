@@ -1,23 +1,10 @@
 import { cookies } from "next/headers";
-import { z } from "zod";
 import { jsonError, jsonOk } from "@/lib/http";
-import {
-  DEMO_COOKIE_NAME,
-  DEMO_COOKIE_VALUE,
-  DEMO_PASSWORD,
-} from "@/features/demo/shared";
-
-const payloadSchema = z.object({
-  password: z.string().min(1),
-});
+import { DEMO_COOKIE_NAME, DEMO_COOKIE_VALUE } from "@/features/demo/shared";
 
 export async function POST(request: Request) {
   try {
-    const body = payloadSchema.parse(await request.json());
-
-    if (body.password !== DEMO_PASSWORD) {
-      return jsonError("That demo password is not correct.", 403);
-    }
+    void request;
 
     const cookieStore = await cookies();
     cookieStore.set(DEMO_COOKIE_NAME, DEMO_COOKIE_VALUE, {

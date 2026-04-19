@@ -1,9 +1,9 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Gamepad2,
   PlayCircle,
   TerminalSquare,
   Users,
@@ -18,19 +18,15 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 const steps = [
   {
     title: "Join a room",
-    body: "Grab a nickname, drop into the lobby, and pick a room vibe that matches the night.",
+    body: "Pick a nickname and get in.",
   },
   {
     title: "Build your turn",
-    body: "Write code or decode what the last dev meant. Fast rounds keep the energy high.",
+    body: "Code it or describe it.",
   },
   {
-    title: "Pass it on",
-    body: "Each player only sees the previous step, so the original idea starts drifting immediately.",
-  },
-  {
-    title: "Reveal the mess",
-    body: "Playback the full chain, react to the breaks, and save the funniest moments for later.",
+    title: "Reveal it",
+    body: "See what the room turned it into.",
   },
 ];
 
@@ -38,32 +34,18 @@ const features = [
   {
     icon: Users,
     title: "Live rooms",
-    body: "Private codes, public lobbies, reconnect protection, and spectator support.",
+    body: "Private codes, public rooms, spectators.",
   },
   {
     icon: TerminalSquare,
     title: "Real editor",
-    body: "Monaco, language-aware syntax, limits, and runtime preview where it makes sense.",
-  },
-  {
-    icon: Gamepad2,
-    title: "Reveal playback",
-    body: "Animated reveal flow, reactions, favorites, and replay links.",
+    body: "Monaco, limits, preview, dark viewer.",
   },
   {
     icon: PlayCircle,
     title: "Demo mode",
-    body: "Temporary password unlock for mock rooms and testing controls while backend pieces evolve.",
+    body: "Mock rooms and testing controls.",
   },
-];
-
-const useCases = [
-  "Hack nights",
-  "Game jams",
-  "CS classes",
-  "Friend groups",
-  "Workshop icebreakers",
-  "Late-night refactors",
 ];
 
 const demoRooms = ["boss-fight-jam", "shader-chaos", "late-night-refactor", "cursed-platformer"];
@@ -75,18 +57,42 @@ const heroFlow = [
 ];
 
 function HeroWorkbench() {
+  const [activeTab, setActiveTab] = useState("enemySpawner.ts");
+  const heroTabs = useMemo(
+    () => [
+      { id: "enemySpawner.ts", label: "enemySpawner.ts", fileKind: "code" as const },
+      { id: "README.md", label: "README.md", fileKind: "markdown" as const },
+      { id: "room.settings.json", label: "room.settings.json", fileKind: "json" as const },
+    ],
+    [],
+  );
+  const heroTree = useMemo(
+    () => [
+      { id: "workspace-root", label: "relay-room", depth: 0, kind: "folder" as const },
+      { id: "workspace-source", label: "src", depth: 1, kind: "folder" as const },
+      { id: "enemySpawner.ts", label: "enemySpawner.ts", depth: 2, kind: "file" as const, fileKind: "code" as const },
+      { id: "playerController.js", label: "playerController.js", depth: 2, kind: "file" as const, fileKind: "code" as const },
+      { id: "README.md", label: "README.md", depth: 1, kind: "file" as const, fileKind: "markdown" as const },
+      { id: "room.settings.json", label: "room.settings.json", depth: 1, kind: "file" as const, fileKind: "json" as const },
+    ],
+    [],
+  );
+  const activePath =
+    activeTab === "README.md"
+      ? "README.md"
+      : activeTab === "room.settings.json"
+        ? "room.settings.json"
+        : `src/${activeTab}`;
+
   return (
     <EditorShell
-      title="relay/demo-room"
-      tabLabel="enemySpawner.ts"
+      title={`relay-demo/${activePath}`}
+      workspaceLabel="relay-workspace"
+      activeTabId={activeTab}
+      onTabChange={setActiveTab}
       panelPosition="right"
-      treeItems={[
-        { label: "relay-room", depth: 0, kind: "folder" },
-        { label: "src", depth: 1, kind: "folder" },
-        { label: "enemySpawner.ts", depth: 2, active: true, kind: "file" },
-        { label: "playerController.js", depth: 2, kind: "file" },
-        { label: "README.md", depth: 1, kind: "file", documentId: "notes" },
-      ]}
+      tabs={heroTabs}
+      treeItems={heroTree}
       panel={
         <div className="grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] bg-[#111317]">
           <div className="border-b border-[#2d2d30] px-4 py-3">
@@ -145,7 +151,7 @@ function HeroWorkbench() {
       statusLeft={
         <>
           <span>main</span>
-          <span>TypeScript</span>
+          <span>{activeTab === "README.md" ? "Markdown" : activeTab === "room.settings.json" ? "JSON" : "TypeScript"}</span>
           <span>Round 2 / 4</span>
         </>
       }
@@ -155,120 +161,140 @@ function HeroWorkbench() {
           <span>relay live</span>
         </>
       }
-    >
-      <div className="bg-[#1e1e1e] p-4">
-        <div className="rounded-[10px] border border-[#2d2d30] bg-[#1e1e1e]">
-          <div className="grid grid-cols-[40px_minmax(0,1fr)] font-mono text-[13px] leading-7">
-            {[
-              {
-                id: "boss-mood",
-                content: (
-                  <>
-                <span className="text-[#569cd6]">const</span>{" "}
-                <span className="text-[#9cdcfe]">bossMood</span>{" "}
-                <span className="text-[#d4d4d4]">=</span>{" "}
-                <span className="text-[#9cdcfe]">player</span>
-                <span className="text-[#d4d4d4]">.</span>
-                <span className="text-[#dcdCAA]">speed</span>{" "}
-                <span className="text-[#d4d4d4]">&lt;</span>{" "}
-                <span className="text-[#b5cea8]">0.2</span>{" "}
-                <span className="text-[#d4d4d4]">?</span>{" "}
-                <span className="text-[#ce9178]">&quot;offended&quot;</span>{" "}
-                <span className="text-[#d4d4d4]">:</span>{" "}
-                <span className="text-[#ce9178]">&quot;locked-in&quot;</span>
-                <span className="text-[#d4d4d4]">;</span>
-                  </>
-                ),
-              },
-              {
-                id: "warning",
-                content: (
-                  <>
-                <span className="text-[#9cdcfe]">arena</span>
-                <span className="text-[#d4d4d4]">.</span>
-                <span className="text-[#dcdCAA]">flashWarning</span>
-                <span className="text-[#d4d4d4]">(</span>
-                <span className="text-[#9cdcfe]">bossMood</span>{" "}
-                <span className="text-[#d4d4d4]">===</span>{" "}
-                <span className="text-[#ce9178]">&quot;offended&quot;</span>{" "}
-                <span className="text-[#d4d4d4]">?</span>{" "}
-                <span className="text-[#ce9178]">&quot;KEEP MOVING&quot;</span>{" "}
-                <span className="text-[#d4d4d4]">:</span>{" "}
-                <span className="text-[#ce9178]">&quot;DODGE&quot;</span>
-                <span className="text-[#d4d4d4]">);</span>
-                  </>
-                ),
-              },
-              {
-                id: "if-open",
-                content: (
-                  <>
-                <span className="text-[#569cd6]">if</span>{" "}
-                <span className="text-[#d4d4d4]">(</span>
-                <span className="text-[#9cdcfe]">bossMood</span>{" "}
-                <span className="text-[#d4d4d4]">===</span>{" "}
-                <span className="text-[#ce9178]">&quot;offended&quot;</span>
-                <span className="text-[#d4d4d4]">) {"{"}</span>
-                  </>
-                ),
-              },
-              {
-                id: "spawn-adds",
-                content: (
-                  <>
-                <span className="text-[#9cdcfe]">spawnAdds</span>
-                <span className="text-[#d4d4d4]">(</span>
-                <span className="text-[#b5cea8]">3</span>
-                <span className="text-[#d4d4d4]">);</span>
-                  </>
-                ),
-              },
-              {
-                id: "phase-step",
-                content: (
-                  <>
-                <span className="text-[#9cdcfe]">boss</span>
-                <span className="text-[#d4d4d4]">.</span>
-                <span className="text-[#9cdcfe]">phase</span>{" "}
-                <span className="text-[#d4d4d4]">+=</span>{" "}
-                <span className="text-[#b5cea8]">1</span>
-                <span className="text-[#d4d4d4]">;</span>
-                  </>
-                ),
-              },
-              {
-                id: "if-close",
-                content: <span className="text-[#d4d4d4]">{"}"}</span>,
-              },
-              {
-                id: "console",
-                content: (
-                  <>
-                <span className="text-[#9cdcfe]">console</span>
-                <span className="text-[#d4d4d4]">.</span>
-                <span className="text-[#dcdCAA]">log</span>
-                <span className="text-[#d4d4d4]">(</span>
-                <span className="text-[#ce9178]">&quot;phase&quot;</span>
-                <span className="text-[#d4d4d4]">,</span>{" "}
-                <span className="text-[#9cdcfe]">boss</span>
-                <span className="text-[#d4d4d4]">.</span>
-                <span className="text-[#9cdcfe]">phase</span>
-                <span className="text-[#d4d4d4]">);</span>
-                  </>
-                ),
-              },
-            ].map((line, index) => (
-              <div key={line.id} className="contents">
-                <div className="border-r border-[#2d2d30] pr-3 text-right text-[#6e7681]">
-                  {index + 1}
-                </div>
-                <div className="overflow-x-auto pl-4 text-[#d4d4d4]">{line.content}</div>
-              </div>
-            ))}
+      content={
+        activeTab === "README.md" ? (
+          <div className="grid gap-4 bg-[#1e1e1e] px-5 py-4 font-mono text-[13px] leading-7 text-[#c9d1d9]" style={{ minHeight: 320 }}>
+            <p className="text-[#4ec9b0]"># README.md</p>
+            <p>Room theme: boss encounter with zero patience.</p>
+            <p>Prompt: build a fight that gets offended if the player stalls.</p>
+            <p>Goal: keep the handoff clear enough that the next person can still wreck it.</p>
           </div>
-        </div>
-      </div>
-    </EditorShell>
+        ) : activeTab === "room.settings.json" ? (
+          <div className="grid gap-4 bg-[#1e1e1e] px-5 py-4 font-mono text-[13px] leading-7 text-[#c9d1d9]" style={{ minHeight: 320 }}>
+            <p className="text-[#4ec9b0]">{`// room.settings.json`}</p>
+            <p>{`{`}</p>
+            <p>{`  "mode": "intermediate",`}</p>
+            <p>{`  "language": "typescript",`}</p>
+            <p>{`  "rounds": 4,`}</p>
+            <p>{`  "timerSeconds": 90`}</p>
+            <p>{`}`}</p>
+          </div>
+        ) : (
+          <div className="bg-[#1e1e1e] p-4">
+            <div className="rounded-[10px] border border-[#2d2d30] bg-[#1e1e1e]">
+              <div className="grid grid-cols-[40px_minmax(0,1fr)] font-mono text-[13px] leading-7">
+                {[
+                  {
+                    id: "boss-mood",
+                    content: (
+                      <>
+                        <span className="text-[#569cd6]">const</span>{" "}
+                        <span className="text-[#9cdcfe]">bossMood</span>{" "}
+                        <span className="text-[#d4d4d4]">=</span>{" "}
+                        <span className="text-[#9cdcfe]">player</span>
+                        <span className="text-[#d4d4d4]">.</span>
+                        <span className="text-[#dcdCAA]">speed</span>{" "}
+                        <span className="text-[#d4d4d4]">&lt;</span>{" "}
+                        <span className="text-[#b5cea8]">0.2</span>{" "}
+                        <span className="text-[#d4d4d4]">?</span>{" "}
+                        <span className="text-[#ce9178]">&quot;offended&quot;</span>{" "}
+                        <span className="text-[#d4d4d4]">:</span>{" "}
+                        <span className="text-[#ce9178]">&quot;locked-in&quot;</span>
+                        <span className="text-[#d4d4d4]">;</span>
+                      </>
+                    ),
+                  },
+                  {
+                    id: "warning",
+                    content: (
+                      <>
+                        <span className="text-[#9cdcfe]">arena</span>
+                        <span className="text-[#d4d4d4]">.</span>
+                        <span className="text-[#dcdCAA]">flashWarning</span>
+                        <span className="text-[#d4d4d4]">(</span>
+                        <span className="text-[#9cdcfe]">bossMood</span>{" "}
+                        <span className="text-[#d4d4d4]">===</span>{" "}
+                        <span className="text-[#ce9178]">&quot;offended&quot;</span>{" "}
+                        <span className="text-[#d4d4d4]">?</span>{" "}
+                        <span className="text-[#ce9178]">&quot;KEEP MOVING&quot;</span>{" "}
+                        <span className="text-[#d4d4d4]">:</span>{" "}
+                        <span className="text-[#ce9178]">&quot;DODGE&quot;</span>
+                        <span className="text-[#d4d4d4]">);</span>
+                      </>
+                    ),
+                  },
+                  {
+                    id: "if-open",
+                    content: (
+                      <>
+                        <span className="text-[#569cd6]">if</span>{" "}
+                        <span className="text-[#d4d4d4]">(</span>
+                        <span className="text-[#9cdcfe]">bossMood</span>{" "}
+                        <span className="text-[#d4d4d4]">===</span>{" "}
+                        <span className="text-[#ce9178]">&quot;offended&quot;</span>
+                        <span className="text-[#d4d4d4]">) {"{"}</span>
+                      </>
+                    ),
+                  },
+                  {
+                    id: "spawn-adds",
+                    content: (
+                      <>
+                        <span className="text-[#9cdcfe]">spawnAdds</span>
+                        <span className="text-[#d4d4d4]">(</span>
+                        <span className="text-[#b5cea8]">3</span>
+                        <span className="text-[#d4d4d4]">);</span>
+                      </>
+                    ),
+                  },
+                  {
+                    id: "phase-step",
+                    content: (
+                      <>
+                        <span className="text-[#9cdcfe]">boss</span>
+                        <span className="text-[#d4d4d4]">.</span>
+                        <span className="text-[#9cdcfe]">phase</span>{" "}
+                        <span className="text-[#d4d4d4]">+=</span>{" "}
+                        <span className="text-[#b5cea8]">1</span>
+                        <span className="text-[#d4d4d4]">;</span>
+                      </>
+                    ),
+                  },
+                  {
+                    id: "if-close",
+                    content: <span className="text-[#d4d4d4]">{"}"}</span>,
+                  },
+                  {
+                    id: "console",
+                    content: (
+                      <>
+                        <span className="text-[#9cdcfe]">console</span>
+                        <span className="text-[#d4d4d4]">.</span>
+                        <span className="text-[#dcdCAA]">log</span>
+                        <span className="text-[#d4d4d4]">(</span>
+                        <span className="text-[#ce9178]">&quot;phase&quot;</span>
+                        <span className="text-[#d4d4d4]">,</span>{" "}
+                        <span className="text-[#9cdcfe]">boss</span>
+                        <span className="text-[#d4d4d4]">.</span>
+                        <span className="text-[#9cdcfe]">phase</span>
+                        <span className="text-[#d4d4d4]">);</span>
+                      </>
+                    ),
+                  },
+                ].map((line, index) => (
+                  <div key={line.id} className="contents">
+                    <div className="border-r border-[#2d2d30] pr-3 text-right text-[#6e7681]">
+                      {index + 1}
+                    </div>
+                    <div className="overflow-x-auto pl-4 text-[#d4d4d4]">{line.content}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+      }
+    />
   );
 }
 
@@ -288,14 +314,13 @@ export default function HomePage() {
               </div>
               <div className="space-y-4">
                 <p className="font-mono text-[0.72rem] uppercase tracking-[0.18em] text-[color:var(--color-text-muted)]">
-                  One prompt enters. Nobody ships the same thing out.
+                  Live room
                 </p>
                 <h1 className="max-w-[10.5ch] text-balance font-display text-5xl font-semibold tracking-[-0.07em] text-[color:var(--color-text-strong)] sm:text-6xl sm:leading-[0.94]">
                   Pass the code. Ship the chaos.
                 </h1>
                 <p className="max-w-2xl text-lg leading-8 text-[color:var(--color-text-soft)]">
-                  Join a room, inherit the last step, and either code it or describe it.
-                  By reveal, the whole thing has drifted into something nobody planned.
+                  One prompt starts it. Everyone only gets the last step. By reveal, it barely looks the same.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -325,10 +350,10 @@ export default function HomePage() {
               <div className="stack-panel relay-ambient space-y-4 px-4 py-4">
                 <div>
                   <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
-                    Pressure column
+                    Handoff
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-soft)]">
-                    Prompt at the top. Handoff in the middle. Damage report at the bottom.
+                    Prompt in. Code out. Damage report later.
                   </p>
                 </div>
                 <div className="relay-divider" />
@@ -336,7 +361,7 @@ export default function HomePage() {
                 <div className="relay-divider" />
                 <div className="space-y-1">
                   <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
-                    Tonight
+                    Right now
                   </p>
                   <p className="text-sm font-medium text-[color:var(--color-text-strong)]">
                     Room BOSS1 is already drifting.
@@ -356,15 +381,14 @@ export default function HomePage() {
           <div>
             <Badge>How It Works</Badge>
             <h2 className="mt-3 font-display text-3xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
-              One prompt. A few devs. Terrible communication.
+              That’s the whole thing.
             </h2>
           </div>
           <p className="hidden max-w-md text-sm leading-7 text-[color:var(--color-text-muted)] lg:block">
-            Relay is fast on purpose. Short rounds keep the room moving and make the final reveal
-            hit harder.
+            Short rounds. One visible step. Reveal at the end.
           </p>
         </div>
-        <div className="grid gap-4 lg:grid-cols-4">
+        <div className="grid gap-4 lg:grid-cols-3">
           {steps.map((step, index) => (
             <Card key={step.title} className="noise-panel space-y-4">
               <div className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] font-mono text-sm text-[color:var(--color-accent-hover)]">
@@ -381,11 +405,11 @@ export default function HomePage() {
 
       <section id="features" className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <Card className="space-y-5">
-          <Badge>Features</Badge>
+          <Badge>Inside</Badge>
           <div>
-            <CardTitle>Only the useful stuff stays on the page.</CardTitle>
+            <CardTitle>What you get.</CardTitle>
             <CardDescription className="mt-2">
-              Rooms, editor, reveal, moderation, and demo tools. No extra filler.
+              Just the parts you need to get a room moving.
             </CardDescription>
           </div>
           <div className="space-y-3">
@@ -412,28 +436,14 @@ export default function HomePage() {
           </div>
         </Card>
         <Card className="space-y-5 relay-ambient">
-          <div className="flex items-center justify-between">
+          <div>
             <div>
-              <Badge>Built For</Badge>
-              <CardTitle className="mt-3">Hackathons, classrooms, and friend groups.</CardTitle>
+              <Badge>Rooms</Badge>
+              <CardTitle className="mt-3">A few rooms already open.</CardTitle>
               <CardDescription className="mt-2">
-                Works best when people are half serious and half trying to make each other laugh.
+                Private, live, or already at reveal.
               </CardDescription>
             </div>
-            <Gamepad2 className="h-5 w-5 text-[color:var(--color-accent-hover)]" />
-          </div>
-          <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
-            <HandoffStrip items={heroFlow} activeIndex={3} compact />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {useCases.map((useCase) => (
-              <span
-                key={useCase}
-                className="rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-3 py-2 font-mono text-[0.75rem] uppercase tracking-[0.12em] text-[color:var(--color-text-soft)]"
-              >
-                {useCase}
-              </span>
-            ))}
           </div>
           <div className="space-y-3">
             {demoRooms.map((roomName, index) => (

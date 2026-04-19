@@ -36,9 +36,9 @@ import { toast } from "sonner";
 import { CODE_LANGUAGES, LANGUAGE_MODES, SKILL_MODES } from "@/features/game/types";
 
 const demoShortcutRooms = [
-  { code: "BOSS1", label: "Playable demo lobby", description: "Host a mock room and test the full flow." },
-  { code: "SHDR5", label: "Live spectator room", description: "Watch an in-progress room with believable data." },
-  { code: "CURSD", label: "Reveal room", description: "Open the final playback stage immediately." },
+  { code: "BOSS1", label: "Lobby" },
+  { code: "SHDR5", label: "Live" },
+  { code: "CURSD", label: "Reveal" },
 ];
 
 function arraysEqual<T>(left: T[], right: T[]) {
@@ -263,10 +263,10 @@ export function PlayHub() {
             </div>
             <div>
               <CardTitle className="text-[1.9rem] sm:text-[2.2rem]">
-                Get into a room fast.
+                Get in fast.
               </CardTitle>
               <CardDescription className="mt-2 max-w-2xl text-base">
-                Set a nickname, start a room, or punch in a code. The rest should stay out of your way.
+                Pick a name, start, join, or quick play.
               </CardDescription>
             </div>
           </div>
@@ -281,7 +281,7 @@ export function PlayHub() {
         </div>
         {!backendConfigured ? (
           <div className="rounded-[14px] border border-dashed border-[rgba(210,153,34,0.45)] bg-[rgba(210,153,34,0.08)] px-4 py-3 text-sm text-[color:var(--color-text-soft)]">
-            Live backend is not configured in this workspace yet. Demo mode keeps the full room flow usable while you test.
+            Live backend is not set here yet. Demo mode keeps the room flow usable.
           </div>
         ) : null}
         <div className="flex flex-wrap gap-2">
@@ -307,7 +307,7 @@ export function PlayHub() {
               <Badge>Create</Badge>
               <CardTitle className="mt-3">Start a room</CardTitle>
               <CardDescription className="mt-2">
-                Pick the vibe, share the code, and launch when the roster looks right.
+                Name it, set the vibe, share the code.
               </CardDescription>
             </div>
             <LockKeyhole className="mt-1 h-5 w-5 shrink-0 text-[color:var(--color-accent-hover)]" />
@@ -362,7 +362,7 @@ export function PlayHub() {
               onClick={() => setShowAdvancedSettings((current) => !current)}
             >
               <SlidersHorizontal className="h-4 w-4" />
-              Advanced settings
+              More
               {showAdvancedSettings ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
           </div>
@@ -446,7 +446,7 @@ export function PlayHub() {
               </div>
               <CardTitle className="mt-3">Jump into a room</CardTitle>
               <CardDescription className="mt-2">
-                Use a room code, spectate, or let Relay find the fastest match.
+                Use a code, spectate, or let Relay find one.
               </CardDescription>
             </div>
             <DoorOpen className="mt-1 h-5 w-5 shrink-0 text-[color:var(--color-warning)]" />
@@ -478,7 +478,7 @@ export function PlayHub() {
               <div className="space-y-1">
                 <p className="label-mono text-[color:var(--color-text-muted)]">Quick Play</p>
                 <p className="text-sm text-[color:var(--color-text-soft)]">
-                  Uses <span className="text-[color:var(--color-text-strong)]">{skillConfig.label}</span>{skillMode === "chaos" ? " with random code languages." : " and the current room setup."}
+                  {skillConfig.label}
                 </p>
               </div>
               <Badge>{skillConfig.label}</Badge>
@@ -495,13 +495,13 @@ export function PlayHub() {
                 <div className="flex items-center gap-2">
                   <TestTube2 className="h-4 w-4 text-[color:var(--color-warning)]" />
                   <p className="text-sm font-medium text-[color:var(--color-text-strong)]">
-                    Demo / testing mode
+                    Demo
                   </p>
                 </div>
                 <p className="mt-1 text-sm text-[color:var(--color-text-muted)]">
                   {demoMode
-                    ? "Unlocked for mock rooms and faster QA."
-                    : "Use the temporary password gate when you need the mock path."}
+                    ? "Mock rooms are on."
+                    : "Use mock rooms here."}
                 </p>
               </div>
               <Button variant="ghost" onClick={openDialog}>
@@ -518,7 +518,7 @@ export function PlayHub() {
                     size="sm"
                     onClick={() => navigateToRoom(room.code)}
                   >
-                    {room.code}
+                    {room.code} / {room.label}
                   </Button>
                 ))}
               </div>
