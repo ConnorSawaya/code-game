@@ -1,25 +1,35 @@
 import type { RoomViewData } from "@/features/rooms/queries";
 import type {
   CodeLanguage,
+  RoomExperienceSettings,
   RoomMemberSnapshot,
   RoomSettings,
+  StepType,
 } from "@/features/game/types";
 import {
   assignSeatForRound,
+  buildScoreboardEntries,
   getCodeFallback,
   getCodeRoundLanguage,
   getPhaseForRound,
+  getRoundLabel,
+  getRoundSequence,
   getSkillModeConfig,
   getStepTypeForRound,
+  getTextFallback,
+  isCodeLikeStep,
+  normalizeRoomExperience,
   normalizeRoomSettings,
 } from "@/features/game/logic";
 import {
+  buildDemoCaption,
   buildDemoChains,
   buildDemoCode,
-  buildDemoDescription,
+  buildDemoGuess,
   buildDemoLobbyRoomViewData,
   buildDemoPrompt,
   buildDemoRoomViewData,
+  buildDemoVoteNote,
   demoNowIso,
   getDemoReplaySlugForRoom,
 } from "@/features/demo/mock-data";
@@ -34,6 +44,22 @@ function getActivePlayers(members: RoomMemberSnapshot[]) {
 
 function getCurrentUser(snapshot: RoomViewData["snapshot"]) {
   return snapshot?.members.find((member) => member.isCurrentUser) ?? null;
+}
+
+function getRoundSequenceFromData(data: RoomViewData) {
+  if (!data.snapshot) {
+    return ["prompt", "code", "guess"] satisfies StepType[];
+  }
+
+  if (data.snapshot.game?.roundSequence?.length) {
+    return data.snapshot.game.roundSequence;
+  }
+
+  const experience = normalizeRoomExperience(
+    data.snapshot.experience,
+    data.snapshot.settings,
+  );
+  return getRoundSequence(experience.gameMode, data.snapshot.settings.roundCount);
 }
 
 function setPhaseWindow(data: RoomViewData) {
@@ -51,8 +77,10 @@ function getCurrentRoundLanguage(data: RoomViewData): CodeLanguage | null {
     return null;
   }
 
+  const roundSequence = getRoundSequenceFromData(data);
   const roundIndex = data.snapshot.game.roundIndex;
-  if (getStepTypeForRound(roundIndex) !== "code") {
+
+  if (!isCodeLikeStep(getStepTypeForRound(roundIndex, roundSequence))) {
     return null;
   }
 
@@ -62,7 +90,34 @@ function getCurrentRoundLanguage(data: RoomViewData): CodeLanguage | null {
     roundIndex,
     1,
     data.snapshot.settings.singleLanguage,
+    roundSequence,
   );
+}
+
+function buildBotStepText(
+  stepType: StepType,
+  originSeatIndex: number,
+  roundIndex: number,
+  language: CodeLanguage | null,
+) {
+  switch (stepType) {
+    case "prompt":
+      return buildDemoPrompt(originSeatIndex);
+    case "guess":
+    case "description":
+      return buildDemoGuess(originSeatIndex, roundIndex);
+    case "caption":
+      return buildDemoCaption(originSeatIndex, roundIndex);
+    case "vote":
+      return buildDemoVoteNote(originSeatIndex, roundIndex);
+    case "fix":
+      return buildDemoCode(originSeatIndex, roundIndex, language ?? "javascript", "fix");
+    case "rebuild":
+      return buildDemoCode(originSeatIndex, roundIndex, language ?? "javascript", "rebuild");
+    case "code":
+    default:
+      return buildDemoCode(originSeatIndex, roundIndex, language ?? "javascript", "code");
+  }
 }
 
 function seedBotsForCurrentRound(data: RoomViewData) {
@@ -77,8 +132,9 @@ function seedBotsForCurrentRound(data: RoomViewData) {
   }
 
   const activePlayers = getActivePlayers(data.snapshot.members);
+  const roundSequence = getRoundSequenceFromData(data);
   const roundIndex = data.snapshot.game.roundIndex;
-  const stepType = getStepTypeForRound(roundIndex);
+  const stepType = getStepTypeForRound(roundIndex, roundSequence);
 
   for (const chain of data.snapshot.game.chains) {
     const assignedSeat = assignSeatForRound(
@@ -97,26 +153,41 @@ function seedBotsForCurrentRound(data: RoomViewData) {
       continue;
     }
 
-    const language = stepType === "code" ? data.snapshot.game.currentCodeLanguage : null;
-    const text =
-      stepType === "prompt"
-        ? buildDemoPrompt(chain.originSeatIndex)
-        : stepType === "description"
-          ? buildDemoDescription(chain.originSeatIndex, roundIndex)
-          : buildDemoCode(chain.originSeatIndex, roundIndex, language ?? "javascript");
+    const language = isCodeLikeStep(stepType)
+      ? data.snapshot.game.currentCodeLanguage
+      : null;
 
     chain.steps.push({
       id: `demo-step-${chain.id}-${roundIndex}`,
       chainId: chain.id,
       roundIndex,
       stepType,
-      text,
+      text: buildBotStepText(stepType, chain.originSeatIndex, roundIndex, language),
       language,
       fallback: false,
       authorMemberId: assignedMember.id,
       createdAt: demoNowIso(-(24 - roundIndex * 3)),
+      stepLabel: chain.steps.find((step) => step.roundIndex === roundIndex)?.stepLabel ?? null,
     });
   }
+}
+
+function finalizeReveal(data: RoomViewData) {
+  if (!data.snapshot?.game || !data.snapshot) {
+    return data;
+  }
+
+  data.snapshot.status = "reveal";
+  data.snapshot.game.phase = "reveal";
+  data.snapshot.game.phaseStartedAt = demoNowIso(-8);
+  data.snapshot.game.phaseEndsAt = null;
+  data.snapshot.game.currentCodeLanguage = null;
+  data.snapshot.game.scoreboard = buildScoreboardEntries(
+    data.snapshot,
+    data.reactionsByStep,
+    data.favoritesByStep,
+  );
+  return data;
 }
 
 function advanceDemoGame(data: RoomViewData) {
@@ -134,16 +205,15 @@ function advanceDemoGame(data: RoomViewData) {
   }
 
   if (roundIndex >= data.snapshot.game.totalRounds) {
-    data.snapshot.status = "reveal";
-    data.snapshot.game.phase = "reveal";
-    data.snapshot.game.phaseStartedAt = demoNowIso(-8);
-    data.snapshot.game.phaseEndsAt = null;
-    data.snapshot.game.currentCodeLanguage = null;
-    return data;
+    return finalizeReveal(data);
   }
 
+  const roundSequence = getRoundSequenceFromData(data);
   data.snapshot.game.roundIndex += 1;
-  data.snapshot.game.phase = getPhaseForRound(data.snapshot.game.roundIndex);
+  data.snapshot.game.phase = getPhaseForRound(
+    data.snapshot.game.roundIndex,
+    roundSequence,
+  );
   data.snapshot.game.currentCodeLanguage = getCurrentRoundLanguage(data);
   setPhaseWindow(data);
   seedBotsForCurrentRound(data);
@@ -162,6 +232,15 @@ export function startDemoRoom(data: RoomViewData) {
   }
 
   const currentUser = getCurrentUser(next.snapshot);
+  const experience = normalizeRoomExperience(
+    next.snapshot.experience,
+    next.snapshot.settings,
+  );
+  const roundSequence = getRoundSequence(
+    experience.gameMode,
+    next.snapshot.settings.roundCount,
+  );
+  const initialRoundIndex = experience.promptSourceMode === "system" ? 1 : 0;
 
   next.snapshot.status = "live";
   next.snapshot.members = next.snapshot.members.map((member) =>
@@ -169,9 +248,9 @@ export function startDemoRoom(data: RoomViewData) {
   );
   next.snapshot.game = {
     id: `demo-game-${next.snapshot.code}`,
-    phase: "prompt",
-    roundIndex: 0,
-    totalRounds: next.snapshot.settings.roundCount,
+    phase: getPhaseForRound(initialRoundIndex, roundSequence),
+    roundIndex: initialRoundIndex,
+    totalRounds: roundSequence.length - 1,
     phaseStartedAt: demoNowIso(-4),
     phaseEndsAt: demoNowIso(getSkillModeConfig(next.snapshot.settings.skillMode).timerSeconds),
     currentCodeLanguage: null,
@@ -179,19 +258,26 @@ export function startDemoRoom(data: RoomViewData) {
     chains: buildDemoChains(
       next.snapshot.code,
       next.snapshot.settings,
+      experience,
       next.snapshot.members,
       next.snapshot.settings.roundCount,
     ).map((chain) => ({
       ...chain,
       promptRecordId: null,
-      promptSourceType: "custom",
+      promptSourceType:
+        experience.promptSourceMode === "system" ? "fallback" : "custom",
       steps:
-        currentUser && chain.originMemberId === currentUser.id
-          ? []
-          : chain.steps.filter((step) => step.roundIndex === 0),
+        experience.promptSourceMode === "system"
+          ? chain.steps.filter((step) => step.roundIndex < initialRoundIndex)
+          : currentUser && chain.originMemberId === currentUser.id
+            ? []
+            : chain.steps.filter((step) => step.roundIndex === 0),
     })),
+    gameMode: experience.gameMode,
+    roundSequence,
   };
 
+  next.snapshot.game.currentCodeLanguage = getCurrentRoundLanguage(next);
   seedBotsForCurrentRound(next);
   return next;
 }
@@ -210,6 +296,7 @@ export function resetDemoRoom(data: RoomViewData) {
     buildDemoLobbyRoomViewData(snapshot.code, currentUser?.nickname ?? "late-night-dev", {
       roomName: snapshot.roomName,
       settings: normalizeRoomSettings(snapshot.settings),
+      experience: normalizeRoomExperience(snapshot.experience, snapshot.settings),
     }) ?? data
   );
 }
@@ -258,6 +345,20 @@ export function saveDemoSettings(
   return next;
 }
 
+export function saveDemoExperience(
+  data: RoomViewData,
+  experience: RoomExperienceSettings,
+) {
+  const next = cloneDemoData(data);
+
+  if (!next.snapshot) {
+    return next;
+  }
+
+  next.snapshot.experience = normalizeRoomExperience(experience, next.snapshot.settings);
+  return next;
+}
+
 export function submitDemoTurn(
   data: RoomViewData,
   text: string,
@@ -276,8 +377,9 @@ export function submitDemoTurn(
     return next;
   }
 
+  const roundSequence = getRoundSequenceFromData(next);
   const roundIndex = next.snapshot.game.roundIndex;
-  const stepType = getStepTypeForRound(roundIndex);
+  const stepType = getStepTypeForRound(roundIndex, roundSequence);
   const activePlayers = getActivePlayers(next.snapshot.members);
   const targetChain =
     roundIndex === 0
@@ -299,10 +401,11 @@ export function submitDemoTurn(
     roundIndex,
     stepType,
     text,
-    language: stepType === "code" ? next.snapshot.game.currentCodeLanguage : null,
+    language: isCodeLikeStep(stepType) ? next.snapshot.game.currentCodeLanguage : null,
     fallback: false,
     authorMemberId: currentUser.id,
     createdAt: demoNowIso(-1),
+    stepLabel: getRoundLabel(roundIndex, roundSequence),
   });
 
   if (roundIndex === 0) {
@@ -326,13 +429,16 @@ export function forceAdvanceDemoRoom(data: RoomViewData) {
     return resetDemoRoom(data);
   }
 
-  const currentStepType = getStepTypeForRound(data.snapshot.game.roundIndex);
-  const fallback =
-    currentStepType === "description"
-      ? "No description submitted."
-      : currentStepType === "code"
-        ? getCodeFallback(data.snapshot.game.currentCodeLanguage ?? "javascript")
-        : buildDemoPrompt(0);
+  const roundSequence = getRoundSequenceFromData(data);
+  const currentStepType = getStepTypeForRound(
+    data.snapshot.game.roundIndex,
+    roundSequence,
+  );
+  const fallback = isCodeLikeStep(currentStepType)
+    ? getCodeFallback(data.snapshot.game.currentCodeLanguage ?? "javascript")
+    : currentStepType === "prompt"
+      ? buildDemoPrompt(0)
+      : getTextFallback(currentStepType);
 
   return submitDemoTurn(data, fallback, null, "custom");
 }
@@ -346,12 +452,30 @@ export function reactToDemoStep(
   next.reactionsByStep[stepId] ??= {};
   next.reactionsByStep[stepId][emoji] =
     (next.reactionsByStep[stepId][emoji] ?? 0) + 1;
+
+  if (next.snapshot?.game?.phase === "reveal" || next.snapshot?.game?.phase === "summary") {
+    next.snapshot.game.scoreboard = buildScoreboardEntries(
+      next.snapshot,
+      next.reactionsByStep,
+      next.favoritesByStep,
+    );
+  }
+
   return next;
 }
 
 export function favoriteDemoStep(data: RoomViewData, stepId: string) {
   const next = cloneDemoData(data);
   next.favoritesByStep[stepId] = (next.favoritesByStep[stepId] ?? 0) + 1;
+
+  if (next.snapshot?.game?.phase === "reveal" || next.snapshot?.game?.phase === "summary") {
+    next.snapshot.game.scoreboard = buildScoreboardEntries(
+      next.snapshot,
+      next.reactionsByStep,
+      next.favoritesByStep,
+    );
+  }
+
   return next;
 }
 

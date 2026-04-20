@@ -5,6 +5,7 @@ import {
   getAllowedLanguagesForSkillMode,
   getCodeFallback,
   getCodeRoundLanguage,
+  getRoundSequence,
   getStepTypeForRound,
   normalizeLanguageSettings,
 } from "@/features/game/logic";
@@ -16,6 +17,31 @@ describe("game logic", () => {
     expect(getStepTypeForRound(1)).toBe("code");
     expect(getStepTypeForRound(2)).toBe("description");
     expect(getStepTypeForRound(3)).toBe("code");
+  });
+
+  it("builds round sequences from the selected relay mode", () => {
+    expect(getRoundSequence("prompt_code_guess", 4)).toEqual([
+      "prompt",
+      "code",
+      "guess",
+      "code",
+      "guess",
+    ]);
+
+    expect(getRoundSequence("code_guess_rebuild", 2)).toEqual([
+      "prompt",
+      "code",
+      "guess",
+      "rebuild",
+    ]);
+
+    expect(getRoundSequence("chaos_relay", 4)).toEqual([
+      "prompt",
+      "code",
+      "guess",
+      "rebuild",
+      "caption",
+    ]);
   });
 
   it("assigns languages for each supported mode", () => {

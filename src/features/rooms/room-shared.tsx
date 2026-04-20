@@ -5,6 +5,7 @@ import { Clock3, Copy, Eye, Play, TestTube2, Users } from "lucide-react";
 import type { CodeLanguage, RoomSnapshot } from "@/features/game/types";
 import {
   canRunPreviewLanguage,
+  getGameModeLabel,
   getRoundLabel,
   getSkillModeConfig,
 } from "@/features/game/logic";
@@ -26,7 +27,12 @@ function getRoomPhaseIndex(snapshot: RoomSnapshot) {
     return 3;
   }
 
-  if (snapshot.game.phase === "description") {
+  if (
+    snapshot.game.phase === "description" ||
+    snapshot.game.phase === "guess" ||
+    snapshot.game.phase === "caption" ||
+    snapshot.game.phase === "vote"
+  ) {
     return 2;
   }
 
@@ -119,6 +125,7 @@ export function RoomHeader({
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{snapshot.code}</Badge>
             <Badge>{getSkillModeConfig(snapshot.settings.skillMode).label}</Badge>
+            {snapshot.experience ? <Badge>{getGameModeLabel(snapshot.experience.gameMode)}</Badge> : null}
             <Badge>
               {snapshot.status === "lobby"
                 ? "Lobby"
@@ -141,10 +148,10 @@ export function RoomHeader({
               </h1>
               <p className="max-w-3xl text-sm leading-6 text-[color:var(--color-text-soft)] sm:text-base">
                 {snapshot.status === "lobby"
-                  ? "Set the room and launch when everyone is ready."
+                  ? "Set the room, pick the handoff mode, and launch when everyone is ready."
                   : snapshot.game?.phase === "reveal"
                     ? "Full chain is open. React, favorite, share the replay."
-                    : "Players only see the last step until reveal."}
+                    : "Only one step stays visible at a time. That is the whole trick."}
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
                 <div className="surface-pill inline-flex items-center gap-2 rounded-[12px] px-3 py-2">
@@ -245,13 +252,23 @@ export function RoomRosterCard({
         </div>
       </div>
       <div className="space-y-3">
-        {snapshot.members.map((member) => (
+                        {snapshot.members.map((member) => (
           <div
             key={member.id}
             className="stack-panel flex flex-wrap items-center justify-between gap-3 px-4 py-4"
           >
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border text-sm font-semibold text-white"
+                style={{
+                  background: member.color ?? "linear-gradient(135deg,#264f78,#007acc)",
+                  borderColor: member.color ?? "#264f78",
+                }}
+              >
+                {member.avatarGlyph ?? member.nickname[0]?.toUpperCase() ?? "R"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
                 <p className="truncate text-base font-semibold text-[color:var(--color-text-strong)]">
                   {member.nickname}
                   {member.isCurrentUser ? " (you)" : ""}
@@ -268,6 +285,7 @@ export function RoomRosterCard({
                 {member.connected ? "Connected" : "Reconnecting"}
                 {member.queuedForNextGame ? " / queued next" : ""}
               </p>
+            </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span

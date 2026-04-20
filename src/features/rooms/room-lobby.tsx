@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { RoomSnapshot } from "@/features/game/types";
+import type { RoomExperienceSettings, RoomSnapshot } from "@/features/game/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -11,22 +11,32 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { SelectableChip } from "@/components/ui/chip";
 import {
   getAllowedLanguagesForSkillMode,
+  getGameModeLabel,
   getLanguageLabel,
+  getRoundSequence,
   getSkillModeConfig,
+  getStepLabel,
   normalizeRoomSettings,
 } from "@/features/game/logic";
+import { RELAY_MODE_DEFINITIONS } from "@/features/game/modes";
 
 export function RoomLobby({
   snapshot,
   settingsDraft,
   setSettingsDraft,
+  experienceDraft,
+  setExperienceDraft,
   onSaveSettings,
+  onSaveExperience,
   submitting,
 }: {
   snapshot: RoomSnapshot;
   settingsDraft: RoomSnapshot["settings"];
   setSettingsDraft: (next: RoomSnapshot["settings"]) => void;
+  experienceDraft: RoomExperienceSettings;
+  setExperienceDraft: (next: RoomExperienceSettings) => void;
   onSaveSettings: () => void;
+  onSaveExperience: () => void;
   submitting: string | null;
 }) {
   const skillConfig = getSkillModeConfig(settingsDraft.skillMode);
@@ -34,6 +44,11 @@ export function RoomLobby({
     () => getAllowedLanguagesForSkillMode(settingsDraft.skillMode),
     [settingsDraft.skillMode],
   );
+  const roundSequence = useMemo(
+    () => getRoundSequence(experienceDraft.gameMode, settingsDraft.roundCount),
+    [experienceDraft.gameMode, settingsDraft.roundCount],
+  );
+  const activeMode = RELAY_MODE_DEFINITIONS[experienceDraft.gameMode];
 
   const applySettingsDraft = (patch: Partial<RoomSnapshot["settings"]>) => {
     setSettingsDraft(
@@ -44,6 +59,13 @@ export function RoomLobby({
     );
   };
 
+  const applyExperienceDraft = (patch: Partial<RoomExperienceSettings>) => {
+    setExperienceDraft({
+      ...experienceDraft,
+      ...patch,
+    });
+  };
+
   return (
     <section className="grid gap-6 xl:grid-cols-[1fr_0.94fr]">
       <Card className="space-y-5">
@@ -51,7 +73,7 @@ export function RoomLobby({
           <Badge>Host Panel</Badge>
           <CardTitle className="mt-3">Room settings</CardTitle>
           <CardDescription className="mt-2">
-            Set it once, then launch.
+            Set the room up once, then start when the roster is ready.
           </CardDescription>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
@@ -169,15 +191,99 @@ export function RoomLobby({
 
       <Card className="space-y-5">
         <div>
-          <Badge>Round Profile</Badge>
-          <CardTitle className="mt-3">Current limits</CardTitle>
+          <Badge>Pregame</Badge>
+          <CardTitle className="mt-3">Relay mode</CardTitle>
+          <CardDescription className="mt-2">
+            Pick the handoff structure, then decide how wild the room should be.
+          </CardDescription>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {Object.values(RELAY_MODE_DEFINITIONS).map((mode) => (
+            <SelectableChip
+              key={mode.id}
+              selected={experienceDraft.gameMode === mode.id}
+              label={mode.shortLabel}
+              onClick={() => applyExperienceDraft({ gameMode: mode.id })}
+            />
+          ))}
+        </div>
+        <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
+          <p className="font-medium text-[color:var(--color-text-strong)]">
+            {getGameModeLabel(experienceDraft.gameMode)}
+          </p>
+          <p className="mt-2 text-sm leading-7 text-[color:var(--color-text-muted)]">
+            {activeMode.lobbyHint}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {roundSequence.map((step, index) => (
+              <Badge key={`${step}-${index}`}>
+                {index === 0 ? "Start" : `${index}. ${getStepLabel(step)}`}
+              </Badge>
+            ))}
+          </div>
+          <p className="mt-4 text-sm leading-7 text-[color:var(--color-text-soft)]">
+            {activeMode.revealHeading}
+          </p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field>
+            <FieldLabel>Prompt source</FieldLabel>
+            <SegmentedControl
+              value={experienceDraft.promptSourceMode}
+              onChange={(value) => applyExperienceDraft({ promptSourceMode: value })}
+              options={[
+                { value: "human", label: "Players" },
+                { value: "system", label: "System" },
+              ]}
+            />
+          </Field>
+          <Field>
+            <FieldLabel>Scoring</FieldLabel>
+            <SegmentedControl
+              value={experienceDraft.scoringMode}
+              onChange={(value) => applyExperienceDraft({ scoringMode: value })}
+              options={[
+                { value: "casual", label: "Casual" },
+                { value: "competitive", label: "Scored" },
+              ]}
+            />
+          </Field>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <SelectableChip
+            selected={experienceDraft.executionEnabled}
+            label={experienceDraft.executionEnabled ? "Execution on" : "Execution off"}
+            onClick={() =>
+              applyExperienceDraft({ executionEnabled: !experienceDraft.executionEnabled })
+            }
+          />
+          <SelectableChip
+            selected={experienceDraft.liveSpectatorsEnabled}
+            label={experienceDraft.liveSpectatorsEnabled ? "Live spectate" : "Reveal only"}
+            onClick={() =>
+              applyExperienceDraft({
+                liveSpectatorsEnabled: !experienceDraft.liveSpectatorsEnabled,
+              })
+            }
+          />
+          <SelectableChip
+            selected={experienceDraft.mixedLanguagesAllowed}
+            label={experienceDraft.mixedLanguagesAllowed ? "Mixed languages" : "Locked language"}
+            onClick={() =>
+              applyExperienceDraft({
+                mixedLanguagesAllowed: !experienceDraft.mixedLanguagesAllowed,
+              })
+            }
+          />
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="stack-panel px-4 py-4">
             <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
               Timer
             </p>
-            <p className="mt-2 font-display text-3xl tracking-[-0.05em]">{skillConfig.timerSeconds}s</p>
+            <p className="mt-2 font-display text-3xl tracking-[-0.05em]">
+              {skillConfig.timerSeconds}s
+            </p>
           </div>
           <div className="stack-panel px-4 py-4">
             <p className="text-[0.7rem] uppercase tracking-[0.16em] text-[color:var(--color-muted)]">
@@ -193,13 +299,25 @@ export function RoomLobby({
           </div>
         </div>
         <div className="grid gap-2 rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4 text-sm text-[color:var(--color-text-muted)]">
-          <p>One chain per player.</p>
-          <p>Code, description, reveal.</p>
+          <p>One chain per player. One visible step at a time.</p>
+          <p>Mode, runtime, and spectator rules shape the room before launch.</p>
+          <p>Scoring looks for: {activeMode.scoringRules.join(", ")}.</p>
+          {!snapshot.isDemo ? (
+            <p>Advanced relay mode rules save on demo/local rooms first. Live backend rooms still run classic relay.</p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2 pt-1">
           <Badge>{getSkillModeConfig(settingsDraft.skillMode).label}</Badge>
           <Badge>{settingsDraft.quickPlayDiscoverable ? "Quick Play enabled" : "Invite only"}</Badge>
+          <Badge>{experienceDraft.executionEnabled ? "Runtime enabled" : "Runtime locked"}</Badge>
         </div>
+        <Button
+          variant="secondary"
+          onClick={onSaveExperience}
+          disabled={!snapshot.isHost || submitting === "experience"}
+        >
+          {submitting === "experience" ? "Saving..." : "Save relay mode"}
+        </Button>
       </Card>
     </section>
   );

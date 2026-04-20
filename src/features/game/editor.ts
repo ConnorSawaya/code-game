@@ -275,12 +275,18 @@ export function getMonacoEditorOptions(
   };
 }
 
-function buildRuntimeBridgeScript() {
+function buildRuntimeBridgeScript(sessionKey = "relay-preview-session") {
   return `
     <script>
+      const relaySessionKey = ${JSON.stringify(sessionKey)};
       const relayPost = (payload) => {
         try {
-          window.parent.postMessage({ source: "relay-preview", ...payload }, "*");
+          window.parent.postMessage({
+            source: "relay-preview",
+            sessionKey: relaySessionKey,
+            timestamp: Date.now(),
+            ...payload,
+          }, "*");
         } catch {}
       };
       const relayFormat = (value) => {
@@ -297,6 +303,7 @@ function buildRuntimeBridgeScript() {
           relayPost({
             type: "console",
             level,
+            sourceLabel: window.location.pathname || "preview",
             message: args.map(relayFormat).join(" "),
           });
           original(...args);
@@ -309,6 +316,8 @@ function buildRuntimeBridgeScript() {
           level: "error",
           message: event.message || "Runtime error",
           stack: event.error && event.error.stack ? event.error.stack : "",
+          line: typeof event.lineno === "number" ? event.lineno : null,
+          column: typeof event.colno === "number" ? event.colno : null,
         });
       });
 
@@ -319,6 +328,8 @@ function buildRuntimeBridgeScript() {
           level: "error",
           message: reason && reason.message ? reason.message : String(reason),
           stack: reason && reason.stack ? reason.stack : "",
+          line: null,
+          column: null,
         });
       });
 
@@ -351,13 +362,14 @@ function injectBridgeIntoDocument(
 export function buildPreviewSrcDoc(
   snippet: string,
   language: CodeLanguage = "html_css_js",
+  sessionKey?: string,
 ) {
   const trimmed = snippet.trim();
   const csp =
     language === "python"
       ? "default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; font-src data: https:;"
       : "default-src 'none'; img-src data: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data: https:;";
-  const bridgeScript = buildRuntimeBridgeScript();
+  const bridgeScript = buildRuntimeBridgeScript(sessionKey);
   const previewMarkup = `
     <main class="relay-preview">
       <h1>Relay Preview</h1>
@@ -393,8 +405,13 @@ export function buildPreviewSrcDoc(
       const pushLine = (value, level = "log") => {
         const text = String(value);
         relayOutput.textContent += text;
-        relayPost({ type: "console", level, message: text.replace(/\\n$/, "") || text });
-      };
+          relayPost({
+            type: "console",
+            level,
+            sourceLabel: "python",
+            message: text.replace(/\\n$/, "") || text,
+          });
+        };
       function builtinRead(filename) {
         if (!Sk.builtinFiles || !Sk.builtinFiles.files[filename]) {
           throw new Error("File not found: " + filename);
@@ -411,11 +428,18 @@ export function buildPreviewSrcDoc(
             __future__: Sk.python3,
           });
           await Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
-          relayPost({ type: "ready", message: "Python run finished." });
+          relayPost({ type: "ready", message: "Python run finished.", sourceLabel: "python" });
         } catch (error) {
           const message = error && error.toString ? error.toString() : String(error);
           pushLine(message + "\\n", "error");
-          relayPost({ type: "error", level: "error", message });
+          relayPost({
+            type: "error",
+            level: "error",
+            message,
+            sourceLabel: "python",
+            line: null,
+            column: null,
+          });
         }
       })();
     </script></body></html>`;

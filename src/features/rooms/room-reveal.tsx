@@ -1,10 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Trophy } from "lucide-react";
 import type { RoomViewData } from "@/features/rooms/queries";
 import type { ChainStep, RoomSnapshot } from "@/features/game/types";
-import { getLanguageLabel, getRoundLabel } from "@/features/game/logic";
+import {
+  getLanguageLabel,
+  getRoundLabel,
+  getStepLabel,
+  getStepVerb,
+} from "@/features/game/logic";
 import { HandoffStrip } from "@/components/ui/handoff-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,16 +30,48 @@ function getStepAuthor(snapshot: RoomSnapshot, step: ChainStep) {
   );
 }
 
-function getStepVerb(step: ChainStep) {
-  switch (step.stepType) {
-    case "prompt":
-      return "Started by";
-    case "description":
-      return "Described by";
-    case "code":
-    default:
-      return "Written by";
+function tokenize(text: string) {
+  return Array.from(
+    new Set(
+      text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter((token) => token.length > 2),
+    ),
+  );
+}
+
+function getDriftScore(chain: NonNullable<RoomSnapshot["game"]>["chains"][number]) {
+  const starter = chain.steps[0]?.text ?? "";
+  const ending = chain.steps[chain.steps.length - 1]?.text ?? "";
+  const starterTokens = tokenize(starter);
+  const endingTokens = new Set(tokenize(ending));
+
+  if (starterTokens.length === 0 || endingTokens.size === 0) {
+    return 0;
   }
+
+  let matches = 0;
+  for (const token of starterTokens) {
+    if (endingTokens.has(token)) {
+      matches += 1;
+    }
+  }
+
+  return matches / starterTokens.length;
+}
+
+function getDriftLabel(score: number) {
+  if (score >= 0.6) {
+    return "Held together";
+  }
+
+  if (score >= 0.3) {
+    return "Partially drifted";
+  }
+
+  return "Fully cursed";
 }
 
 export function RoomReveal({
@@ -61,6 +98,7 @@ export function RoomReveal({
     (sum, count) => sum + count,
     0,
   );
+  const scoreboard = snapshot.game?.scoreboard ?? [];
 
   return (
     <section className="section-grid">
@@ -68,13 +106,13 @@ export function RoomReveal({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge>Reveal stage</Badge>
+              <Badge>Reveal theater</Badge>
               {snapshot.isDemo ? <Badge>Demo replay</Badge> : null}
             </div>
             <CardTitle className="mt-3">Open the damage report.</CardTitle>
             <CardDescription className="mt-2 max-w-2xl">
-              The whole chain is visible now. Follow every handoff, react to every bad turn,
-              and save the moment the room really lost the plot.
+              The whole chain is visible now. Follow every handoff, react to the worst turns,
+              and see which ideas somehow survived the room.
             </CardDescription>
           </div>
           {snapshot.game?.replaySlug ? (
@@ -88,7 +126,7 @@ export function RoomReveal({
           <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
             <HandoffStrip
               items={[
-                { label: "Prompt", hint: "Somebody starts the problem." },
+                { label: "Prompt", hint: "Somebody starts the trouble." },
                 { label: "Build", hint: "Another dev takes a swing at it." },
                 { label: "Pass", hint: "Meaning drifts under pressure." },
                 { label: "Reveal", hint: "Now the whole room sees the damage." },
@@ -119,9 +157,70 @@ export function RoomReveal({
         </div>
       </Card>
 
+      {scoreboard.length > 0 ? (
+        <Card className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <Badge>Scoreboard</Badge>
+              <CardTitle className="mt-3">Who survived the relay.</CardTitle>
+              <CardDescription className="mt-2">
+                Scoring stays light: good guesses, solid fixes, and crowd-favorite moments.
+              </CardDescription>
+            </div>
+            <Trophy className="h-5 w-5 text-[#f4d27d]" />
+          </div>
+          <div className="grid gap-3 lg:grid-cols-3">
+            {scoreboard.map((entry, index) => (
+              <div
+                key={entry.memberId}
+                className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
+                      #{index + 1}
+                    </p>
+                    <p className="mt-2 truncate text-lg font-semibold text-[color:var(--color-text-strong)]">
+                      {entry.nickname}
+                    </p>
+                  </div>
+                  <div
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: entry.accentColor }}
+                  />
+                </div>
+                <p className="mt-4 font-display text-4xl tracking-[-0.06em] text-[color:var(--color-text-strong)]">
+                  {entry.score}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {entry.badges.length > 0 ? (
+                    entry.badges.map((badge) => <Badge key={badge}>{badge}</Badge>)
+                  ) : (
+                    <Badge>kept it moving</Badge>
+                  )}
+                </div>
+                <div className="mt-4 space-y-2 text-sm text-[color:var(--color-text-muted)]">
+                  {entry.details.length > 0 ? (
+                    entry.details.map((detail) => <p key={detail}>{detail}</p>)
+                  ) : (
+                    <p>Stayed in the relay and kept the chain alive.</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
       <div className="space-y-6">
         {snapshot.game?.chains.map((chain, chainIndex) => {
           const starter = chain.steps[0];
+          const driftScore = getDriftScore(chain);
+          const mostReactedStep = [...chain.steps].sort((left, right) => {
+            const leftCount = Object.values(reactionsByStep[left.id] ?? {}).reduce((sum, count) => sum + count, 0);
+            const rightCount = Object.values(reactionsByStep[right.id] ?? {}).reduce((sum, count) => sum + count, 0);
+            return rightCount - leftCount;
+          })[0];
 
           return (
             <motion.div
@@ -136,6 +235,7 @@ export function RoomReveal({
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge>Chain {chain.originSeatIndex + 1}</Badge>
                     <Badge>{chain.steps.length} steps</Badge>
+                    <Badge>{getDriftLabel(driftScore)}</Badge>
                   </div>
                   <div>
                     <p className="font-display text-2xl tracking-[-0.05em] text-[color:var(--color-text-strong)]">
@@ -149,9 +249,10 @@ export function RoomReveal({
                   </div>
                 </div>
                 <div className="rounded-[16px] border border-[color:var(--color-border)] bg-[color:var(--color-bg-main)] px-4 py-4">
-                  <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
-                    Started as
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge>Started as</Badge>
+                    {mostReactedStep ? <Badge>Most reacted: {getStepLabel(mostReactedStep.stepType)}</Badge> : null}
+                  </div>
                   <p className="mt-3 text-sm leading-7 text-[color:var(--color-text)]">
                     {starter?.text ?? "No starter prompt recorded."}
                   </p>
@@ -202,12 +303,12 @@ export function RoomReveal({
                           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[color:var(--color-border)] px-4 py-4">
                             <div className="space-y-2">
                               <div className="flex flex-wrap items-center gap-2">
-                                <Badge>{getRoundLabel(step.roundIndex)}</Badge>
+                                <Badge>{step.stepLabel ?? getRoundLabel(step.roundIndex, snapshot.game?.roundSequence)}</Badge>
                                 {step.language ? <Badge>{getLanguageLabel(step.language)}</Badge> : null}
                                 {step.fallback ? <Badge>Fallback</Badge> : null}
                               </div>
                               <p className="font-mono text-[0.68rem] uppercase tracking-[0.16em] text-[color:var(--color-text-muted)]">
-                                {getStepVerb(step)} {author}
+                                {getStepVerb(step.stepType)} {author}
                               </p>
                             </div>
                             <div className="text-right">
@@ -218,7 +319,7 @@ export function RoomReveal({
                           </div>
 
                           <div className="px-4 py-4">
-                            {step.stepType === "code" ? (
+                            {step.stepType === "code" || step.stepType === "rebuild" || step.stepType === "fix" ? (
                               <ReadonlyCode value={step.text} language={step.language} height={240} />
                             ) : (
                               <p className="text-base leading-8 text-[color:var(--color-text)] sm:text-lg">

@@ -4,20 +4,28 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   startTransition,
 } from "react";
 import { useRouter } from "next/navigation";
 import { differenceInSeconds } from "date-fns";
+import { AnimatePresence, motion } from "framer-motion";
 import { TestTube2, SkipForward, RotateCcw } from "lucide-react";
 import type { PromptRecord } from "@/features/game/types";
-import { deriveViewerTask, normalizeRoomSettings } from "@/features/game/logic";
+import {
+  deriveViewerTask,
+  getRoundLabel,
+  normalizeRoomExperience,
+  normalizeRoomSettings,
+} from "@/features/game/logic";
 import {
   favoriteDemoStep,
   forceAdvanceDemoRoom,
   getDemoStorageKey,
   reactToDemoStep,
   resetDemoRoom,
+  saveDemoExperience,
   saveDemoSettings,
   startDemoRoom,
   submitDemoTurn,
@@ -60,14 +68,29 @@ export function RoomClient({
   const [promptDifficulty, setPromptDifficulty] = useState<"all" | PromptRecord["difficulty"]>("all");
   const [promptPack, setPromptPack] = useState<"all" | string>("all");
   const [settingsDraft, setSettingsDraft] = useState(initialData.snapshot?.settings ?? null);
+  const [experienceDraft, setExperienceDraft] = useState(
+    initialData.snapshot
+      ? normalizeRoomExperience(initialData.snapshot.experience, initialData.snapshot.settings)
+      : null,
+  );
   const [turnstileToken, setTurnstileToken] = useState("");
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
   const [demoStorageReady, setDemoStorageReady] = useState(false);
-
+  const [passMessage, setPassMessage] = useState<string | null>(null);
+  const previousPhaseKeyRef = useRef<string | null>(null);
   const snapshot = data.snapshot;
+  const normalizedSnapshotSettings = snapshot?.settings
+    ? normalizeRoomSettings(snapshot.settings)
+    : null;
+  const normalizedSnapshotExperience = snapshot?.settings
+    ? normalizeRoomExperience(snapshot.experience, snapshot.settings)
+    : null;
+  const phaseKey = snapshot?.game
+    ? `${snapshot.game.id}:${snapshot.game.phase}:${snapshot.game.roundIndex}`
+    : null;
   const isDemoRoom = Boolean(snapshot?.isDemo);
   const task = snapshot ? deriveViewerTask(snapshot) : null;
   const draftKey = getDraftKey(snapshot ?? null, task?.chainId ?? null);
@@ -111,8 +134,9 @@ export function RoomClient({
   }, [data, demoStorageReady, snapshot?.code, snapshot?.isDemo]);
 
   useEffect(() => {
-    setSettingsDraft(snapshot?.settings ? normalizeRoomSettings(snapshot.settings) : null);
-  }, [snapshot?.code, snapshot?.settings]);
+    setSettingsDraft(normalizedSnapshotSettings);
+    setExperienceDraft(normalizedSnapshotExperience);
+  }, [normalizedSnapshotExperience, normalizedSnapshotSettings]);
 
   useEffect(() => {
     if (!draftKey) {
@@ -137,6 +161,30 @@ export function RoomClient({
 
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!phaseKey) {
+      previousPhaseKeyRef.current = null;
+      return;
+    }
+
+    if (!previousPhaseKeyRef.current) {
+      previousPhaseKeyRef.current = phaseKey;
+      return;
+    }
+
+    if (previousPhaseKeyRef.current !== phaseKey) {
+      previousPhaseKeyRef.current = phaseKey;
+      const activeGame = snapshot?.game;
+      if (activeGame && activeGame.phase !== "reveal" && activeGame.phase !== "summary") {
+        setPassMessage(`Passed forward. ${getRoundLabel(activeGame.roundIndex, activeGame.roundSequence)} is live.`);
+        const timer = window.setTimeout(() => setPassMessage(null), 1500);
+        return () => window.clearTimeout(timer);
+      }
+    }
+
+    return undefined;
+  }, [phaseKey, snapshot, snapshot?.game?.phase, snapshot?.game?.roundIndex, snapshot?.game?.roundSequence]);
 
   useEffect(() => {
     if (!snapshot?.id || snapshot.isDemo) {
@@ -352,6 +400,8 @@ export function RoomClient({
           snapshot={snapshot}
           settingsDraft={settingsDraft}
           setSettingsDraft={setSettingsDraft}
+          experienceDraft={experienceDraft ?? normalizeRoomExperience(snapshot.experience, snapshot.settings)}
+          setExperienceDraft={setExperienceDraft}
           onSaveSettings={() =>
             isDemoRoom
               ? handleDemoMutation(
@@ -363,84 +413,109 @@ export function RoomClient({
                   await postJson(`/api/room/${snapshot.code}/settings`, settingsDraft);
                 })
           }
+          onSaveExperience={() =>
+            isDemoRoom && experienceDraft
+              ? handleDemoMutation(
+                  "experience",
+                  (current) => saveDemoExperience(current, experienceDraft),
+                  "Relay mode updated.",
+                )
+              : toast.message("Advanced relay mode controls are running on demo rooms first.")
+          }
           submitting={submitting}
         />
       ) : null}
 
       {snapshot.game && snapshot.game.phase !== "reveal" && snapshot.game.phase !== "summary" ? (
-        <RoomActivePhase
-          snapshot={snapshot}
-          task={task}
-          promptLibrary={promptLibrary}
-          draft={draft}
-          setDraft={setDraft}
-          selectedPromptId={selectedPromptId}
-          setSelectedPromptId={setSelectedPromptId}
-          promptSearch={promptSearch}
-          setPromptSearch={setPromptSearch}
-          promptDifficulty={promptDifficulty}
-          setPromptDifficulty={setPromptDifficulty}
-          promptPack={promptPack}
-          setPromptPack={setPromptPack}
-          onRandomPrompt={() => {
-            const randomPrompt =
-              promptLibrary[Math.floor(Math.random() * promptLibrary.length)];
-            setSelectedPromptId(randomPrompt.id);
-            setDraft(randomPrompt.text);
-          }}
-          onSubmit={() =>
-            isDemoRoom
-              ? handleDemoMutation("submit", (current) => {
-                  if (!snapshot || !task) {
-                    return current;
-                  }
+        <div className="relative">
+          <AnimatePresence>
+            {passMessage ? (
+              <motion.div
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="pointer-events-none absolute inset-x-0 top-0 z-20 mx-auto max-w-[620px]"
+              >
+                <div className="rounded-[16px] border border-[rgba(24,144,241,0.35)] bg-[rgba(11,37,56,0.92)] px-5 py-4 text-center text-sm font-medium text-[#d7ecff] shadow-[0_16px_40px_rgba(0,0,0,0.3)]">
+                  {passMessage}
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+          <RoomActivePhase
+            snapshot={snapshot}
+            task={task}
+            promptLibrary={promptLibrary}
+            draft={draft}
+            setDraft={setDraft}
+            selectedPromptId={selectedPromptId}
+            setSelectedPromptId={setSelectedPromptId}
+            promptSearch={promptSearch}
+            setPromptSearch={setPromptSearch}
+            promptDifficulty={promptDifficulty}
+            setPromptDifficulty={setPromptDifficulty}
+            promptPack={promptPack}
+            setPromptPack={setPromptPack}
+            onRandomPrompt={() => {
+              const randomPrompt =
+                promptLibrary[Math.floor(Math.random() * promptLibrary.length)];
+              setSelectedPromptId(randomPrompt.id);
+              setDraft(randomPrompt.text);
+            }}
+            onSubmit={() =>
+              isDemoRoom
+                ? handleDemoMutation("submit", (current) => {
+                    if (!snapshot || !task) {
+                      return current;
+                    }
 
-                  const text =
-                    task.expectedStepType === "prompt" && selectedPromptId
-                      ? promptLibrary.find((prompt) => prompt.id === selectedPromptId)?.text ?? draft
-                      : draft;
+                    const text =
+                      task.expectedStepType === "prompt" && selectedPromptId
+                        ? promptLibrary.find((prompt) => prompt.id === selectedPromptId)?.text ?? draft
+                        : draft;
 
-                  if (draftKey) {
-                    window.localStorage.removeItem(draftKey);
-                  }
-                  setDraft("");
+                    if (draftKey) {
+                      window.localStorage.removeItem(draftKey);
+                    }
+                    setDraft("");
 
-                  return submitDemoTurn(
-                    current,
-                    text,
-                    selectedPromptId,
-                    task.expectedStepType === "prompt" && selectedPromptId
-                      ? "library"
-                      : "custom",
-                  );
-                })
-              : void handleApi("submit", async () => {
-                  if (!snapshot || !task) {
-                    return;
-                  }
-
-                  const text =
-                    task.expectedStepType === "prompt" && selectedPromptId
-                      ? promptLibrary.find((prompt) => prompt.id === selectedPromptId)?.text ?? draft
-                      : draft;
-
-                  await postJson(`/api/room/${snapshot.code}/submit`, {
-                    text,
-                    promptRecordId: selectedPromptId,
-                    promptSourceType:
+                    return submitDemoTurn(
+                      current,
+                      text,
+                      selectedPromptId,
                       task.expectedStepType === "prompt" && selectedPromptId
                         ? "library"
                         : "custom",
-                  });
+                    );
+                  })
+                : void handleApi("submit", async () => {
+                    if (!snapshot || !task) {
+                      return;
+                    }
 
-                  if (draftKey) {
-                    window.localStorage.removeItem(draftKey);
-                  }
-                  setDraft("");
-                })
-          }
-          submitting={submitting}
-        />
+                    const text =
+                      task.expectedStepType === "prompt" && selectedPromptId
+                        ? promptLibrary.find((prompt) => prompt.id === selectedPromptId)?.text ?? draft
+                        : draft;
+
+                    await postJson(`/api/room/${snapshot.code}/submit`, {
+                      text,
+                      promptRecordId: selectedPromptId,
+                      promptSourceType:
+                        task.expectedStepType === "prompt" && selectedPromptId
+                          ? "library"
+                          : "custom",
+                    });
+
+                    if (draftKey) {
+                      window.localStorage.removeItem(draftKey);
+                    }
+                    setDraft("");
+                  })
+            }
+            submitting={submitting}
+          />
+        </div>
       ) : null}
 
       {snapshot.game && (snapshot.game.phase === "reveal" || snapshot.game.phase === "summary") ? (
